@@ -58,6 +58,8 @@ function sendRequest(id, method, params = {}) {
 
         if (bearerToken) {
             options.headers.Authorization = `Bearer ${bearerToken}`;
+            // WAMP/Apache often strips Authorization; JMCP accepts this fallback.
+            options.headers['X-JMCP-Token'] = bearerToken;
         }
 
         const req = client.request(options, (res) => {

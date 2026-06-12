@@ -47,14 +47,12 @@ class AuthService
                 return ['error' => 'Authentication is required but no Bearer token is configured.', 'code' => JsonRpc::FORBIDDEN];
             }
 
-            $authHeader = $input->server->getString('HTTP_AUTHORIZATION', '');
-            if (empty($authHeader)) {
-                $authHeader = $input->server->getString('REDIRECT_HTTP_AUTHORIZATION', '');
-            }
+            $authHeader = $this->resolveAuthorizationHeader($input);
+            $providedToken = $this->extractBearerToken($authHeader);
 
-            $providedToken = '';
-            if (str_starts_with($authHeader, 'Bearer ')) {
-                $providedToken = substr($authHeader, 7);
+            // Fallback when Apache strips Authorization (common on WAMP/XAMPP)
+            if ($providedToken === '') {
+                $providedToken = trim((string) $input->server->getString('HTTP_X_JMCP_TOKEN', ''));
             }
 
             if (empty($providedToken)) {
@@ -88,5 +86,55 @@ class AuthService
         }
 
         return $remoteAddr;
+    }
+
+    private function resolveAuthorizationHeader($input): string
+    {
+        $authHeader = $input->server->getString('HTTP_AUTHORIZATION', '');
+        if ($authHeader !== '') {
+            return $authHeader;
+        }
+
+        $authHeader = $input->server->getString('REDIRECT_HTTP_AUTHORIZATION', '');
+        if ($authHeader !== '') {
+            return $authHeader;
+        }
+
+        if (function_exists('apache_request_headers')) {
+            $headers = apache_request_headers();
+            if (is_array($headers)) {
+                foreach ($headers as $name => $value) {
+                    if (strcasecmp((string) $name, 'Authorization') === 0) {
+                        return (string) $value;
+                    }
+                }
+            }
+        }
+
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            if (is_array($headers)) {
+                foreach ($headers as $name => $value) {
+                    if (strcasecmp((string) $name, 'Authorization') === 0) {
+                        return (string) $value;
+                    }
+                }
+            }
+        }
+
+        return '';
+    }
+
+    private function extractBearerToken(string $authHeader): string
+    {
+        if ($authHeader === '') {
+            return '';
+        }
+
+        if (str_starts_with($authHeader, 'Bearer ')) {
+            return substr($authHeader, 7);
+        }
+
+        return '';
     }
 }

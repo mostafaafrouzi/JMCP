@@ -5,10 +5,10 @@
         <description>Joomla Model Context Protocol Server for AI-powered site management.</description>
         <element>com_jmcp</element>
         <type>component</type>
-        <version>2.2.2</version>
+        <version>1.0.0</version>
         <infourl title="JMCP Releases">https://github.com/mostafaafrouzi/JMCP/releases</infourl>
         <downloads>
-            <downloadurl type="full" format="zip">https://github.com/mostafaafrouzi/JMCP/releases/download/v2.2.2/com_jmcp.zip</downloadurl>
+            <downloadurl type="full" format="zip">https://github.com/mostafaafrouzi/JMCP/releases/download/v1.0.0/com_jmcp.zip</downloadurl>
         </downloads>
         <tags>
             <tag>stable</tag>

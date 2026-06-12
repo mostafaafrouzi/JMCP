@@ -57,7 +57,7 @@ class IntegrationDetector
             $result[$key] = (int) $db->setQuery($query)->loadResult() > 0;
         }
 
-        // Helix may use different element names
+        // Helix-based templates (Helix Ultimate, UT/brand wrappers like ut_resto)
         if (!$result['helixultimate']) {
             $query = $db->getQuery(true)
                 ->select('COUNT(*)')
@@ -65,8 +65,13 @@ class IntegrationDetector
                 ->where($db->quoteName('type') . ' = ' . $db->quote('template'))
                 ->where($db->quoteName('enabled') . ' = 1')
                 ->where('(' . $db->quoteName('element') . ' LIKE ' . $db->quote('%helix%')
-                    . ' OR ' . $db->quoteName('name') . ' LIKE ' . $db->quote('%Helix%') . ')');
+                    . ' OR ' . $db->quoteName('name') . ' LIKE ' . $db->quote('%Helix%')
+                    . ' OR ' . $db->quoteName('element') . ' LIKE ' . $db->quote('ut_%') . ')');
             $result['helixultimate'] = (int) $db->setQuery($query)->loadResult() > 0;
+        }
+
+        if (!$result['helixultimate'] && is_dir(JPATH_ROOT . '/templates/ut_resto')) {
+            $result['helixultimate'] = true;
         }
 
         $this->cache = $result;

@@ -58,6 +58,14 @@ class SkillRegistry
                     ['name' => 'price', 'description' => 'Product price', 'required' => false],
                 ],
             ],
+            [
+                'name'        => 'rebrand-site',
+                'description' => 'Rebrand entire Joomla site: config, articles, SP pages, menus, VirtueMart, modules.',
+                'arguments'   => [
+                    ['name' => 'brand', 'description' => 'New brand/site name', 'required' => true],
+                    ['name' => 'old_brand', 'description' => 'Previous brand to replace', 'required' => false],
+                ],
+            ],
         ];
     }
 
@@ -69,7 +77,8 @@ class SkillRegistry
             'setup-multilingual'   => "Set up multilingual site for languages: {languages}. Use list_content_languages, create_content_language, set_article_associations, set_menu_item_associations.",
             'audit-site-health'    => "Run get_site_health_extended, get_sitemap_status, audit_duplicate_content, check_broken_links, check_core_updates. Produce prioritized action list.",
             'create-template-override' => "Use create_template_override for {component} view {view}. Read existing layout with read_file. Write minimal override.",
-            'manage-shop-product'  => "Use detect_installed_shops first. Create/update product '{name}' price '{price}' with the matching shop tools.",
+            'manage-shop-product'  => "Use detect_installed_shops first. Create/update product '{name}' price '{price}' with virtuemart_update_product or matching shop tools.",
+            'rebrand-site'         => "Rebrand site to '{brand}'. 1) site_rebrand with dry_run=true first. 2) search_site_content for old text. 3) bulk_content_replace on sp_pages/articles/menus. 4) update_global_config. 5) virtuemart_clone_language_tables if fa-IR. 6) run_cache_clean. Use update_article/update_menu_item for per-item fixes.",
         ];
 
         if (!isset($templates[$name])) {

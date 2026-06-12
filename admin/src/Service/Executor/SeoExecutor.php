@@ -177,7 +177,7 @@ class SeoExecutor
         $limit = max(1, min(50, (int) ($params['limit'] ?? 20)));
         $db = Factory::getDbo();
         $query = $db->getQuery(true)
-            ->select(['id', 'title', 'introtext', 'fulltext'])
+            ->select(['id', 'title', 'introtext', $db->quoteName('fulltext')])
             ->from('#__content')
             ->where('state = 1')
             ->order('id DESC');
@@ -215,6 +215,159 @@ class SeoExecutor
         }
 
         return ['source' => 'none', 'rules' => [], 'message' => 'No redirect extension table found.'];
+    }
+
+    public function listJoomlaRedirects(array $params): array
+    {
+        $db = Factory::getDbo();
+        $limit = max(1, min(100, (int) ($params['limit'] ?? 50)));
+
+        $query = $db->getQuery(true)
+            ->select(['id', 'old_url', 'new_url', 'published', 'created_date', 'modified_date', 'referer', 'hits'])
+            ->from($db->quoteName('#__redirect_links'))
+            ->order('id DESC');
+
+        if (isset($params['published'])) {
+            $query->where($db->quoteName('published') . ' = ' . (int) $params['published']);
+        }
+
+        return ['redirects' => $db->setQuery($query, 0, $limit)->loadAssocList() ?: []];
+    }
+
+    public function createJoomlaRedirect(array $params): array
+    {
+        $oldUrl = trim((string) ($params['old_url'] ?? ''));
+        $newUrl = trim((string) ($params['new_url'] ?? ''));
+
+        if ($oldUrl === '' || $newUrl === '') {
+            throw new \RuntimeException('old_url and new_url are required.');
+        }
+
+        $db = Factory::getDbo();
+        $now = Factory::getDate()->toSql();
+        $row = (object) [
+            'old_url'       => $oldUrl,
+            'new_url'       => $newUrl,
+            'published'     => (int) ($params['published'] ?? 1),
+            'created_date'  => $now,
+            'modified_date' => $now,
+            'referer'       => '',
+            'comment'       => (string) ($params['comment'] ?? 'Created via JMCP'),
+            'hits'          => 0,
+        ];
+
+        $db->insertObject('#__redirect_links', $row);
+
+        return [
+            'id'      => (int) $db->insertid(),
+            'old_url' => $oldUrl,
+            'new_url' => $newUrl,
+            'message' => 'Redirect created successfully.',
+        ];
+    }
+
+    public function updateJoomlaRedirect(array $params): array
+    {
+        $id = (int) ($params['id'] ?? 0);
+        $fields = (array) ($params['fields'] ?? []);
+
+        if ($id <= 0 || $fields === []) {
+            throw new \RuntimeException('id and fields are required.');
+        }
+
+        $fields['id'] = $id;
+        $fields['modified_date'] = Factory::getDate()->toSql();
+        Factory::getDbo()->updateObject('#__redirect_links', (object) $fields, 'id');
+
+        return ['id' => $id, 'message' => 'Redirect updated.'];
+    }
+
+    public function deleteJoomlaRedirect(array $params): array
+    {
+        $id = (int) ($params['id'] ?? 0);
+        if ($id <= 0) {
+            throw new \RuntimeException('id is required.');
+        }
+
+        $db = Factory::getDbo();
+        $db->setQuery($db->getQuery(true)->delete('#__redirect_links')->where('id = ' . $id))->execute();
+
+        return ['id' => $id, 'message' => 'Redirect deleted.'];
+    }
+
+    public function getSchemaorgForItem(array $params): array
+    {
+        $itemId = (int) ($params['item_id'] ?? 0);
+        $context = (string) ($params['context'] ?? 'com_content.article');
+
+        if ($itemId <= 0) {
+            throw new \RuntimeException('item_id is required.');
+        }
+
+        $db = Factory::getDbo();
+        if (!$this->tableExists('#__schemaorg')) {
+            return ['item_id' => $itemId, 'schema' => null, 'message' => 'Schema.org not available.'];
+        }
+
+        $row = $db->setQuery(
+            $db->getQuery(true)->select('*')->from('#__schemaorg')
+                ->where('itemId = ' . $itemId)->where('context = ' . $db->quote($context))
+        )->loadAssoc();
+
+        if ($row && !empty($row['schema'])) {
+            $row['schema'] = json_decode((string) $row['schema'], true) ?: $row['schema'];
+        }
+
+        return ['item_id' => $itemId, 'context' => $context, 'record' => $row];
+    }
+
+    public function updateSchemaorgForItem(array $params): array
+    {
+        $itemId = (int) ($params['item_id'] ?? 0);
+        $context = (string) ($params['context'] ?? 'com_content.article');
+        $schemaType = (string) ($params['schema_type'] ?? 'Article');
+        $schema = $params['schema'] ?? null;
+
+        if ($itemId <= 0 || $schema === null) {
+            throw new \RuntimeException('item_id and schema are required.');
+        }
+
+        if (!$this->tableExists('#__schemaorg')) {
+            throw new \RuntimeException('Schema.org table not found.');
+        }
+
+        $db = Factory::getDbo();
+        $schemaJson = is_string($schema) ? $schema : json_encode($schema, JSON_UNESCAPED_UNICODE);
+        $existingId = (int) $db->setQuery(
+            $db->getQuery(true)->select('id')->from('#__schemaorg')
+                ->where('itemId = ' . $itemId)->where('context = ' . $db->quote($context))
+        )->loadResult();
+
+        if ($existingId > 0) {
+            $db->setQuery(
+                $db->getQuery(true)->update('#__schemaorg')
+                    ->set('schemaType = ' . $db->quote($schemaType))
+                    ->set('schema = ' . $db->quote((string) $schemaJson))
+                    ->where('id = ' . $existingId)
+            )->execute();
+            return ['id' => $existingId, 'message' => 'Schema.org updated.'];
+        }
+
+        $row = (object) [
+            'itemId'     => $itemId,
+            'context'    => $context,
+            'schemaType' => $schemaType,
+            'schema'     => (string) $schemaJson,
+        ];
+        $db->insertObject('#__schemaorg', $row);
+
+        return ['id' => (int) $db->insertid(), 'message' => 'Schema.org created.'];
+    }
+
+    private function tableExists(string $table): bool
+    {
+        $db = Factory::getDbo();
+        return in_array($db->replacePrefix($table), $db->getTableList() ?: [], true);
     }
 
     /** @param string[] $issues */

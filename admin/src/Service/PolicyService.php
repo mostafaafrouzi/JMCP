@@ -29,6 +29,10 @@ class PolicyService
         'execute_php' => 'allow_php_exec',
         'run_cli_command' => 'allow_cli_exec', 'run_cache_clean' => 'allow_cli_exec',
         'check_core_updates' => 'allow_cli_exec', 'akeeba_create_backup' => 'allow_cli_exec',
+        'finder_rebuild_index' => 'allow_cli_exec', 'apply_joomla_update' => 'allow_cli_exec',
+        'run_scheduler_task' => 'allow_cli_exec',
+        'install_extension' => 'allow_file_write', 'update_extension' => 'allow_file_write',
+        'create_site_snapshot' => 'allow_file_write', 'restore_site_snapshot' => 'allow_file_write',
     ];
 
     public function __construct(Registry $params, ?FeatureGate $featureGate = null)

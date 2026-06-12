@@ -12,11 +12,13 @@ namespace Joomla\Component\Jmcp\Administrator\Service;
 
 defined('_JEXEC') or die;
 
-use Joomla\CMS\Factory;
-use Psr\SimpleCache\CacheInterface;
 use DateInterval;
+use Joomla\CMS\Factory;
 
-class JoomlaCache implements CacheInterface
+/**
+ * Joomla cache wrapper (no PSR interface — works on all Joomla 4/5/6 site contexts).
+ */
+class JoomlaCache
 {
     private $cache;
     private string $group;
@@ -89,7 +91,6 @@ class JoomlaCache implements CacheInterface
 
     public function deleteByPrefix(string $prefix): void
     {
-        // Simple fallback delete by prefix
         if (method_exists($this->cache, 'getAll')) {
             $cachedKeys = $this->cache->getAll();
             if (is_array($cachedKeys)) {
@@ -100,7 +101,6 @@ class JoomlaCache implements CacheInterface
                 }
             }
         } else {
-            // Clean group is safer if getAll is not available on some cache backends
             $this->clear();
         }
     }

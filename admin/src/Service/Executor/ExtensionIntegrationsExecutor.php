@@ -38,9 +38,25 @@ class ExtensionIntegrationsExecutor
     public function akeebaCreateBackup(array $params): array
     {
         $this->assert('akeebabackup');
+        $php = PHP_BINARY ?: 'php';
+        $cli = escapeshellarg(JPATH_ROOT . '/cli/joomla.php');
+        $profile = (int) ($params['profile'] ?? 1);
+        $cmd = escapeshellarg($php) . ' ' . $cli . ' akeeba:backup --profile=' . $profile;
+        exec($cmd . ' 2>&1', $output, $code);
+
+        if ($code !== 0) {
+            return [
+                'exit_code' => $code,
+                'output'    => implode("\n", $output),
+                'message'   => 'Akeeba CLI backup failed. Try: php cli/joomla.php akeeba:backup',
+                'cli'       => 'akeeba:backup --profile=' . $profile,
+            ];
+        }
+
         return [
-            'message' => 'Trigger backup via CLI: php cli/joomla.php akeeba:backup',
-            'cli'     => 'akeeba:backup',
+            'exit_code' => $code,
+            'output'    => implode("\n", $output),
+            'message'   => 'Akeeba backup started/completed via CLI.',
         ];
     }
 
@@ -117,6 +133,58 @@ class ExtensionIntegrationsExecutor
             ->order('SubmissionId DESC');
         $db->setQuery($query, 0, (int) ($params['limit'] ?? 25));
         return ['submissions' => $db->loadAssocList() ?: []];
+    }
+
+    public function exportRsformSubmissions(array $params): array
+    {
+        $this->assert('rsform');
+        $formId = (int) ($params['form_id'] ?? 0);
+        if ($formId <= 0) {
+            throw new \RuntimeException('form_id is required.');
+        }
+
+        $db = Factory::getDbo();
+        $submissions = $db->setQuery(
+            $db->getQuery(true)->select('*')->from('#__rsform_submissions')
+                ->where('FormId = ' . $formId)->order('SubmissionId DESC')
+        )->loadAssocList() ?: [];
+
+        $values = $db->setQuery(
+            $db->getQuery(true)->select('*')->from('#__rsform_submission_values')
+                ->where('FormId = ' . $formId)
+        )->loadAssocList() ?: [];
+
+        $bySubmission = [];
+        foreach ($values as $val) {
+            $sid = (int) ($val['SubmissionId'] ?? 0);
+            $bySubmission[$sid][] = $val;
+        }
+
+        $export = [];
+        foreach ($submissions as $sub) {
+            $sid = (int) $sub['SubmissionId'];
+            $export[] = [
+                'submission' => $sub,
+                'values'     => $bySubmission[$sid] ?? [],
+            ];
+        }
+
+        $format = strtolower((string) ($params['format'] ?? 'json'));
+        if ($format === 'csv' && $export !== []) {
+            $lines = ['submission_id,field_name,value'];
+            foreach ($export as $row) {
+                foreach ($row['values'] as $v) {
+                    $lines[] = implode(',', [
+                        (int) ($v['SubmissionId'] ?? 0),
+                        '"' . str_replace('"', '""', (string) ($v['FieldName'] ?? '')) . '"',
+                        '"' . str_replace('"', '""', (string) ($v['FieldValue'] ?? '')) . '"',
+                    ]);
+                }
+            }
+            return ['form_id' => $formId, 'format' => 'csv', 'content' => implode("\n", $lines)];
+        }
+
+        return ['form_id' => $formId, 'format' => 'json', 'submissions' => $export, 'count' => count($export)];
     }
 
     public function acymailingListLists(array $params): array

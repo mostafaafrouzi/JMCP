@@ -33,3 +33,8 @@ dist/
 build/
 *.zip
 tmp/
+tmp-*.json
+
+# Local MCP test artifacts
+tools/import-mrautomat-log.csv
+

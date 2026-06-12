@@ -12,14 +12,12 @@ namespace Joomla\Component\Jmcp\Administrator\Service;
 
 defined('_JEXEC') or die;
 
-use Psr\SimpleCache\CacheInterface;
-
 class CacheService
 {
-    private CacheInterface $cache;
+    private JoomlaCache $cache;
     private int $defaultTtlSeconds;
 
-    public function __construct(CacheInterface $cache, int $defaultTtlSeconds = 60)
+    public function __construct(JoomlaCache $cache, int $defaultTtlSeconds = 60)
     {
         $this->cache = $cache;
         $this->defaultTtlSeconds = $defaultTtlSeconds;

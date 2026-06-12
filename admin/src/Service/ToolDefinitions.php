@@ -19,7 +19,13 @@ class ToolDefinitions
             self::phase1(),
             self::phase2(),
             self::phase3(),
-            self::phase4()
+            self::phase4(),
+            self::phase5(),
+            self::phase6(),
+            self::phase7(),
+            self::phase8(),
+            self::phase9(),
+            self::phase10()
         );
     }
 
@@ -35,7 +41,7 @@ class ToolDefinitions
             self::t('get_component_params', 'Read component config.', ['type' => 'object', 'properties' => ['option' => ['type' => 'string']], 'required' => ['option']], 'read'),
             self::t('list_articles', 'List/search articles.', ['type' => 'object', 'properties' => ['search' => ['type' => 'string'], 'catid' => ['type' => 'integer'], 'state' => ['type' => 'integer'], 'limit' => ['type' => 'integer'], 'offset' => ['type' => 'integer']]], 'read'),
             self::t('get_article', 'Get article by ID (raw DB content by default).', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'raw_content' => ['type' => 'boolean']], 'required' => ['id']], 'read'),
-            self::t('create_article', 'Create article.', ['type' => 'object', 'properties' => ['title' => ['type' => 'string'], 'catid' => ['type' => 'integer'], 'introtext' => ['type' => 'string'], 'fulltext' => ['type' => 'string'], 'state' => ['type' => 'integer'], 'language' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']], 'required' => ['title', 'catid', 'introtext']], 'write'),
+            self::t('create_article', 'Create article.', ['type' => 'object', 'properties' => ['title' => ['type' => 'string'], 'alias' => ['type' => 'string'], 'catid' => ['type' => 'integer'], 'introtext' => ['type' => 'string'], 'fulltext' => ['type' => 'string'], 'state' => ['type' => 'integer'], 'language' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']], 'required' => ['title', 'catid', 'introtext']], 'write'),
             self::t('update_article', 'Update article.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'fields' => ['type' => 'object'], 'dry_run' => ['type' => 'boolean']], 'required' => ['id', 'fields']], 'write'),
             self::t('delete_article', 'Delete article (trash default; force requires trash state + expected_title).', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'force' => ['type' => 'boolean'], 'expected_title' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']], 'required' => ['id']], 'destructive'),
             self::t('list_categories', 'List categories.', ['type' => 'object'], 'read'),
@@ -66,8 +72,8 @@ class ToolDefinitions
             self::t('get_db_table_columns', 'Get table columns.', ['type' => 'object', 'properties' => ['table' => ['type' => 'string']], 'required' => ['table']], 'read'),
             self::t('execute_sql', 'Execute SQL.', ['type' => 'object', 'properties' => ['sql' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']], 'required' => ['sql']], 'execute'),
             self::t('list_sp_pages', 'List SP Page Builder pages.', ['type' => 'object'], 'read'),
-            self::t('get_sp_page', 'Get SP page.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id']], 'read'),
-            self::t('save_sp_page', 'Save SP page.', ['type' => 'object', 'properties' => ['title' => ['type' => 'string'], 'layout' => ['type' => 'string']], 'required' => ['title', 'layout']], 'write'),
+            self::t('get_sp_page', 'Get SP page (includes content JSON by default).', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'include_content' => ['type' => 'boolean']], 'required' => ['id']], 'read'),
+            self::t('save_sp_page', 'Create or update SP Page Builder page (supports content JSON column).', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'title' => ['type' => 'string'], 'content' => ['type' => 'string'], 'layout' => ['type' => 'string'], 'css' => ['type' => 'string'], 'published' => ['type' => 'integer'], 'language' => ['type' => 'string'], 'og_title' => ['type' => 'string'], 'og_description' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']]], 'write'),
             self::t('execute_php', 'Execute PHP in Joomla context.', ['type' => 'object', 'properties' => ['code' => ['type' => 'string']], 'required' => ['code']], 'execute'),
             self::t('run_cli_command', 'Run Joomla CLI command.', ['type' => 'object', 'properties' => ['command' => ['type' => 'string']], 'required' => ['command']], 'execute'),
         ];
@@ -146,9 +152,9 @@ class ToolDefinitions
     {
         return [
             self::t('detect_installed_shops', 'Detect installed e-commerce extensions.', ['type' => 'object'], 'read'),
-            self::t('virtuemart_list_products', 'List VirtueMart products.', ['type' => 'object'], 'read'),
-            self::t('virtuemart_get_product', 'Get VirtueMart product.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id']], 'read'),
-            self::t('virtuemart_save_product', 'Save VirtueMart product.', ['type' => 'object', 'properties' => ['name' => ['type' => 'string']], 'required' => ['name']], 'write'),
+            self::t('virtuemart_list_products', 'List VirtueMart products with language table names.', ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer'], 'offset' => ['type' => 'integer'], 'category_id' => ['type' => 'integer'], 'language' => ['type' => 'string']]], 'read'),
+            self::t('virtuemart_get_product', 'Get VirtueMart product with language data.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'language' => ['type' => 'string']], 'required' => ['id']], 'read'),
+            self::t('virtuemart_save_product', 'Save VirtueMart product (alias of virtuemart_update_product).', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'name' => ['type' => 'string'], 'short_description' => ['type' => 'string'], 'description' => ['type' => 'string'], 'published' => ['type' => 'integer'], 'language' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']]], 'write'),
             self::t('virtuemart_list_orders', 'List VirtueMart orders.', ['type' => 'object'], 'read'),
             self::t('hikashop_list_products', 'List HikaShop products.', ['type' => 'object'], 'read'),
             self::t('hikashop_get_product', 'Get HikaShop product.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id']], 'read'),
@@ -182,6 +188,132 @@ class ToolDefinitions
             self::t('memory_store', 'Store persistent memory for AI sessions (Pro).', ['type' => 'object', 'properties' => ['key' => ['type' => 'string'], 'value' => ['type' => 'string'], 'context' => ['type' => 'string']], 'required' => ['key', 'value']], 'write'),
             self::t('memory_search', 'Search persistent memory (Pro).', ['type' => 'object', 'properties' => ['query' => ['type' => 'string'], 'context' => ['type' => 'string']], 'required' => ['query']], 'read'),
             self::t('memory_list', 'List persistent memory entries (Pro).', ['type' => 'object', 'properties' => ['context' => ['type' => 'string'], 'limit' => ['type' => 'integer']]], 'read'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private static function phase5(): array
+    {
+        return [
+            self::t('list_users', 'List Joomla users.', ['type' => 'object', 'properties' => ['search' => ['type' => 'string'], 'block' => ['type' => 'integer'], 'limit' => ['type' => 'integer'], 'offset' => ['type' => 'integer']]], 'read'),
+            self::t('get_user', 'Get user by ID with groups.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id']], 'read'),
+            self::t('list_user_groups', 'List Joomla user groups.', ['type' => 'object'], 'read'),
+            self::t('get_global_config', 'Read global site configuration (safe keys).', ['type' => 'object'], 'read'),
+            self::t('list_banners', 'List site banners.', ['type' => 'object', 'properties' => ['state' => ['type' => 'integer'], 'limit' => ['type' => 'integer']]], 'read'),
+            self::t('list_newsfeeds', 'List news feeds.', ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer']]], 'read'),
+            self::t('finder_search', 'Search indexed content via Smart Search.', ['type' => 'object', 'properties' => ['query' => ['type' => 'string'], 'limit' => ['type' => 'integer']], 'required' => ['query']], 'read'),
+            self::t('list_joomla_redirects', 'List Joomla core redirects (com_redirect).', ['type' => 'object', 'properties' => ['published' => ['type' => 'integer'], 'limit' => ['type' => 'integer']]], 'read'),
+            self::t('create_joomla_redirect', 'Create Joomla core redirect.', ['type' => 'object', 'properties' => ['old_url' => ['type' => 'string'], 'new_url' => ['type' => 'string'], 'published' => ['type' => 'integer'], 'comment' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']], 'required' => ['old_url', 'new_url']], 'write'),
+            self::t('get_article_by_alias', 'Get article by URL alias.', ['type' => 'object', 'properties' => ['alias' => ['type' => 'string'], 'catid' => ['type' => 'integer']], 'required' => ['alias']], 'read'),
+            self::t('assign_article_tags', 'Assign tags to an article.', ['type' => 'object', 'properties' => ['article_id' => ['type' => 'integer'], 'tag_ids' => ['type' => 'array', 'items' => ['type' => 'integer']], 'dry_run' => ['type' => 'boolean']], 'required' => ['article_id', 'tag_ids']], 'write'),
+            self::t('virtuemart_list_categories', 'List VirtueMart product categories.', ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer']]], 'read'),
+            self::t('virtuemart_get_order', 'Get VirtueMart order with items.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id']], 'read'),
+            self::t('list_audit_log', 'List JMCP audit log entries.', ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer']]], 'read'),
+            self::t('get_mcp_metrics', 'Get JMCP usage metrics summary.', ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer']]], 'read'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private static function phase6(): array
+    {
+        $replaceSchema = [
+            'type' => 'array',
+            'items' => [
+                'type' => 'object',
+                'properties' => [
+                    'from' => ['type' => 'string'],
+                    'to'   => ['type' => 'string'],
+                ],
+                'required' => ['from', 'to'],
+            ],
+        ];
+
+        return [
+            self::t('update_global_config', 'Update Joomla global configuration (sitename, meta, mail, language).', ['type' => 'object', 'properties' => ['fields' => ['type' => 'object'], 'dry_run' => ['type' => 'boolean']], 'required' => ['fields']], 'write'),
+            self::t('bulk_content_replace', 'Bulk find/replace text across site tables (presets: sp_pages, articles, menus, virtuemart_*).', ['type' => 'object', 'properties' => ['preset' => ['type' => 'string'], 'presets' => ['type' => 'array', 'items' => ['type' => 'string']], 'targets' => ['type' => 'object'], 'replacements' => $replaceSchema, 'where' => ['type' => 'object'], 'dry_run' => ['type' => 'boolean']], 'required' => ['replacements']], 'write'),
+            self::t('search_site_content', 'Search for a text needle across site content tables.', ['type' => 'object', 'properties' => ['needle' => ['type' => 'string'], 'preset' => ['type' => 'string'], 'presets' => ['type' => 'array', 'items' => ['type' => 'string']], 'targets' => ['type' => 'object'], 'limit_per_column' => ['type' => 'integer']], 'required' => ['needle']], 'read'),
+            self::t('site_rebrand', 'Guided site rebrand: global config + bulk text replace + optional VM language clone + cache clean.', ['type' => 'object', 'properties' => ['brand' => ['type' => 'string'], 'old_brand' => ['type' => 'string'], 'meta_desc' => ['type' => 'string'], 'presets' => ['type' => 'array', 'items' => ['type' => 'string']], 'clone_vm_language_tables' => ['type' => 'boolean'], 'vm_source_lang' => ['type' => 'string'], 'vm_target_lang' => ['type' => 'string'], 'clear_cache' => ['type' => 'boolean'], 'dry_run' => ['type' => 'boolean']], 'required' => ['brand']], 'write'),
+            self::t('bulk_replace_sp_content', 'Bulk replace text inside SP Page Builder pages (content column).', ['type' => 'object', 'properties' => ['replacements' => $replaceSchema, 'page_ids' => ['type' => 'array', 'items' => ['type' => 'integer']], 'dry_run' => ['type' => 'boolean']], 'required' => ['replacements']], 'write'),
+            self::t('virtuemart_update_category', 'Update VirtueMart category name/description in language table.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'name' => ['type' => 'string'], 'description' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'published' => ['type' => 'integer'], 'ordering' => ['type' => 'integer'], 'language' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']], 'required' => ['id']], 'write'),
+            self::t('virtuemart_update_product', 'Update VirtueMart product in language table (name, descriptions, slug).', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'name' => ['type' => 'string'], 'short_description' => ['type' => 'string'], 'description' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'published' => ['type' => 'integer'], 'language' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']], 'required' => ['id']], 'write'),
+            self::t('virtuemart_update_vendor', 'Update VirtueMart store/vendor info.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'name' => ['type' => 'string'], 'store_description' => ['type' => 'string'], 'phone' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'language' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']]], 'write'),
+            self::t('virtuemart_clone_language_tables', 'Clone VirtueMart *_en_gb tables to another language suffix (e.g. fa_ir).', ['type' => 'object', 'properties' => ['source_suffix' => ['type' => 'string'], 'target_suffix' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']]], 'write'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private static function phase7(): array
+    {
+        return [
+            self::t('virtuemart_set_product_price', 'Set or update VirtueMart product price.', ['type' => 'object', 'properties' => ['product_id' => ['type' => 'integer'], 'price' => ['type' => 'number'], 'price_id' => ['type' => 'integer'], 'currency' => ['type' => 'integer'], 'override' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['product_id', 'price']], 'write'),
+            self::t('virtuemart_assign_product_categories', 'Assign categories to a VirtueMart product.', ['type' => 'object', 'properties' => ['product_id' => ['type' => 'integer'], 'category_ids' => ['type' => 'array', 'items' => ['type' => 'integer']], 'mode' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']], 'required' => ['product_id', 'category_ids']], 'write'),
+            self::t('virtuemart_manage_product_media', 'List, attach, or detach VirtueMart product media.', ['type' => 'object', 'properties' => ['action' => ['type' => 'string'], 'product_id' => ['type' => 'integer'], 'media_id' => ['type' => 'integer'], 'link_id' => ['type' => 'integer'], 'ordering' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['product_id']], 'write'),
+            self::t('virtuemart_get_config', 'Get VirtueMart shop configuration.', ['type' => 'object'], 'read'),
+            self::t('virtuemart_set_config', 'Update VirtueMart shop configuration key/value pairs.', ['type' => 'object', 'properties' => ['config' => ['type' => 'object'], 'dry_run' => ['type' => 'boolean']], 'required' => ['config']], 'write'),
+            self::t('virtuemart_list_custom_fields', 'List VirtueMart custom fields.', ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer'], 'published' => ['type' => 'integer']]], 'read'),
+            self::t('virtuemart_set_custom_field', 'Create or update VirtueMart custom field.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'title' => ['type' => 'string'], 'element' => ['type' => 'string'], 'field_type' => ['type' => 'string'], 'published' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']]], 'write'),
+            self::t('delete_sp_page', 'Delete an SP Page Builder page.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['id']], 'destructive'),
+            self::t('update_sp_page_meta', 'Update SP page meta (og_*, attribs, extension binding).', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'title' => ['type' => 'string'], 'published' => ['type' => 'integer'], 'og_title' => ['type' => 'string'], 'og_description' => ['type' => 'string'], 'og_image' => ['type' => 'string'], 'attribs' => ['type' => 'object'], 'extension' => ['type' => 'string'], 'view_id' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['id']], 'write'),
+            self::t('list_sp_page_modules', 'List mod_sppagebuilder modules (optionally by page_id).', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer']]], 'read'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private static function phase8(): array
+    {
+        return [
+            self::t('get_helix_menu_layout', 'Get Helix mega menu layout from menu item params.', ['type' => 'object', 'properties' => ['menu_id' => ['type' => 'integer']], 'required' => ['menu_id']], 'read'),
+            self::t('update_helix_menu_layout', 'Update Helix mega menu layout on a menu item.', ['type' => 'object', 'properties' => ['menu_id' => ['type' => 'integer'], 'layout' => ['type' => 'object']], 'required' => ['menu_id', 'layout']], 'write'),
+            self::t('list_template_positions', 'List module positions from templateDetails.xml.', ['type' => 'object', 'properties' => ['template' => ['type' => 'string'], 'client_id' => ['type' => 'integer']]], 'read'),
+            self::t('update_ut_articles_module', 'Update mod_ut_articles_pro module settings.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'catid' => ['type' => 'integer'], 'count' => ['type' => 'integer'], 'position' => ['type' => 'string'], 'params' => ['type' => 'object']], 'required' => ['id']], 'write'),
+            self::t('assign_module_to_menu', 'Assign module visibility to menu items (#__modules_menu).', ['type' => 'object', 'properties' => ['module_id' => ['type' => 'integer'], 'menu_ids' => ['type' => 'array', 'items' => ['type' => 'integer']], 'mode' => ['type' => 'string']], 'required' => ['module_id']], 'write'),
+            self::t('set_default_template_style', 'Set site or admin default template style.', ['type' => 'object', 'properties' => ['style_id' => ['type' => 'integer'], 'client_id' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['style_id']], 'write'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private static function phase9(): array
+    {
+        return [
+            self::t('update_component_params', 'Merge params into a Joomla component.', ['type' => 'object', 'properties' => ['option' => ['type' => 'string'], 'params' => ['type' => 'object'], 'dry_run' => ['type' => 'boolean']], 'required' => ['option', 'params']], 'write'),
+            self::t('finder_rebuild_index', 'Rebuild Smart Search (Finder) index via CLI.', ['type' => 'object'], 'execute'),
+            self::t('create_banner', 'Create com_banners banner.', ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'clickurl' => ['type' => 'string'], 'catid' => ['type' => 'integer'], 'state' => ['type' => 'integer']], 'required' => ['name']], 'write'),
+            self::t('update_banner', 'Update banner fields.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'fields' => ['type' => 'object']], 'required' => ['id', 'fields']], 'write'),
+            self::t('delete_banner', 'Delete a banner.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id']], 'destructive'),
+            self::t('create_newsfeed', 'Create com_newsfeeds feed.', ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'link' => ['type' => 'string'], 'catid' => ['type' => 'integer']], 'required' => ['name', 'link']], 'write'),
+            self::t('update_newsfeed', 'Update newsfeed fields.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'fields' => ['type' => 'object']], 'required' => ['id', 'fields']], 'write'),
+            self::t('delete_newsfeed', 'Delete a newsfeed.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id']], 'destructive'),
+            self::t('update_joomla_redirect', 'Update com_redirect link.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'fields' => ['type' => 'object']], 'required' => ['id', 'fields']], 'write'),
+            self::t('delete_joomla_redirect', 'Delete com_redirect link.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id']], 'destructive'),
+            self::t('create_user', 'Create Joomla user.', ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'username' => ['type' => 'string'], 'email' => ['type' => 'string'], 'password' => ['type' => 'string'], 'group_ids' => ['type' => 'array', 'items' => ['type' => 'integer']]], 'required' => ['name', 'username', 'email']], 'write'),
+            self::t('update_user', 'Update Joomla user fields.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'fields' => ['type' => 'object']], 'required' => ['id', 'fields']], 'write'),
+            self::t('assign_user_groups', 'Assign user to groups.', ['type' => 'object', 'properties' => ['user_id' => ['type' => 'integer'], 'group_ids' => ['type' => 'array', 'items' => ['type' => 'integer']], 'mode' => ['type' => 'string']], 'required' => ['user_id', 'group_ids']], 'write'),
+            self::t('toggle_extension', 'Enable or disable an extension.', ['type' => 'object', 'properties' => ['extension_id' => ['type' => 'integer'], 'element' => ['type' => 'string'], 'type' => ['type' => 'string'], 'enabled' => ['type' => 'boolean']], 'required' => ['enabled']], 'write'),
+            self::t('list_scheduler_tasks', 'List Joomla scheduler tasks.', ['type' => 'object'], 'read'),
+            self::t('run_scheduler_task', 'Run scheduler task(s) via CLI.', ['type' => 'object', 'properties' => ['task_id' => ['type' => 'integer']]], 'execute'),
+            self::t('get_schemaorg_for_item', 'Get schema.org JSON for content item.', ['type' => 'object', 'properties' => ['item_id' => ['type' => 'integer'], 'context' => ['type' => 'string']], 'required' => ['item_id']], 'read'),
+            self::t('update_schemaorg_for_item', 'Create or update schema.org for content item.', ['type' => 'object', 'properties' => ['item_id' => ['type' => 'integer'], 'context' => ['type' => 'string'], 'schema_type' => ['type' => 'string'], 'schema' => ['type' => 'object']], 'required' => ['item_id', 'schema']], 'write'),
+            self::t('update_custom_field', 'Update Joomla custom field definition.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'fields' => ['type' => 'object']], 'required' => ['id', 'fields']], 'write'),
+            self::t('delete_custom_field', 'Delete Joomla custom field.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id']], 'destructive'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private static function phase10(): array
+    {
+        return [
+            self::t('install_extension', 'Install extension from zip package path.', ['type' => 'object', 'properties' => ['path' => ['type' => 'string']], 'required' => ['path']], 'execute'),
+            self::t('update_extension', 'Update extension from zip package.', ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'extension_id' => ['type' => 'integer']], 'required' => ['path']], 'execute'),
+            self::t('apply_joomla_update', 'Apply pending Joomla core update via CLI.', ['type' => 'object'], 'execute'),
+            self::t('export_rsform_submissions', 'Export RSForm submissions as JSON or CSV.', ['type' => 'object', 'properties' => ['form_id' => ['type' => 'integer'], 'format' => ['type' => 'string']], 'required' => ['form_id']], 'read'),
+            self::t('list_sp_collections', 'List SP Page Builder collections.', ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer']]], 'read'),
+            self::t('get_sp_collection', 'Get SP collection with items.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id']], 'read'),
+            self::t('save_sp_collection', 'Create or update SP collection.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer'], 'title' => ['type' => 'string'], 'alias' => ['type' => 'string'], 'published' => ['type' => 'integer']], 'required' => ['title']], 'write'),
+            self::t('delete_sp_collection', 'Delete SP collection and items.', ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id']], 'destructive'),
+            self::t('configure_webhook', 'Configure JMCP webhook URL/secret.', ['type' => 'object', 'properties' => ['url' => ['type' => 'string'], 'secret' => ['type' => 'string'], 'enabled' => ['type' => 'boolean']]], 'write'),
+            self::t('get_webhook_config', 'Read JMCP webhook configuration (no secret).', ['type' => 'object'], 'read'),
+            self::t('create_site_snapshot', 'Export key site tables to JSON snapshot.', ['type' => 'object', 'properties' => ['label' => ['type' => 'string'], 'tables' => ['type' => 'array', 'items' => ['type' => 'string']]]], 'write'),
+            self::t('restore_site_snapshot', 'Restore site tables from JSON snapshot.', ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'tables' => ['type' => 'array', 'items' => ['type' => 'string']], 'dry_run' => ['type' => 'boolean']], 'required' => ['path']], 'destructive'),
         ];
     }
 

@@ -17,14 +17,15 @@ class TierRegistry
 
     /** @var string[] Tools reserved for JMCP Pro (blocked when Pro is not active). */
     private const PRO_TOOLS = [
-        'virtuemart_list_products', 'virtuemart_get_product', 'virtuemart_save_product', 'virtuemart_list_orders',
+        'virtuemart_list_orders',
         'hikashop_list_products', 'hikashop_get_product', 'hikashop_save_product', 'hikashop_list_orders',
         'j2commerce_list_products', 'j2commerce_get_product', 'j2commerce_save_product',
-        'get_helix_layout', 'update_helix_params', 'list_helix_positions',
-        'bulk_update_meta', 'duplicate_sp_page',
+        'bulk_update_meta',
         'akeeba_create_backup',
         'trigger_webhook',
         'memory_store', 'memory_search', 'memory_list',
+        'install_extension', 'update_extension', 'apply_joomla_update',
+        'restore_site_snapshot',
     ];
 
     /** @var string[] Feature flags (non-tool) gated behind Pro. */
@@ -32,7 +33,6 @@ class TierRegistry
         'persistent_memory',
         'webhook_dispatch',
         'shop_integrations',
-        'helix_integration',
         'advanced_seo_bulk',
         'akeeba_backup_trigger',
     ];
@@ -64,11 +64,10 @@ class TierRegistry
      */
     public function getProFeatureForTool(string $toolName): ?string
     {
-        if (str_starts_with($toolName, 'virtuemart_') || str_starts_with($toolName, 'hikashop_') || str_starts_with($toolName, 'j2commerce_')) {
+        if (in_array($toolName, ['virtuemart_list_orders', 'hikashop_list_orders'], true)
+            || str_starts_with($toolName, 'hikashop_')
+            || str_starts_with($toolName, 'j2commerce_')) {
             return 'shop_integrations';
-        }
-        if (str_starts_with($toolName, 'get_helix_') || str_starts_with($toolName, 'update_helix_') || str_starts_with($toolName, 'list_helix_')) {
-            return 'helix_integration';
         }
         if ($toolName === 'bulk_update_meta') {
             return 'advanced_seo_bulk';

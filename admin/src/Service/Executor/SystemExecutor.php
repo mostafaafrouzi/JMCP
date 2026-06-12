@@ -73,4 +73,72 @@ class SystemExecutor
 
         return ['hints' => $hints, 'article_count' => $articles];
     }
+
+    public function finderRebuildIndex(array $params): array
+    {
+        $php = PHP_BINARY ?: 'php';
+        $cli = escapeshellarg(JPATH_ROOT . '/cli/joomla.php');
+        exec(escapeshellarg($php) . ' ' . $cli . ' finder:index 2>&1', $output, $code);
+
+        return [
+            'exit_code' => $code,
+            'output'    => implode("\n", $output),
+            'message'   => $code === 0 ? 'Finder index rebuilt.' : 'Finder index command finished with errors.',
+        ];
+    }
+
+    public function applyJoomlaUpdate(array $params): array
+    {
+        $php = PHP_BINARY ?: 'php';
+        $cli = escapeshellarg(JPATH_ROOT . '/cli/joomla.php');
+        exec(escapeshellarg($php) . ' ' . $cli . ' core:update 2>&1', $output, $code);
+
+        return [
+            'exit_code' => $code,
+            'output'    => implode("\n", $output),
+            'message'   => $code === 0 ? 'Joomla update applied.' : 'Update command finished with errors.',
+        ];
+    }
+
+    public function listSchedulerTasks(array $params): array
+    {
+        $db = Factory::getDbo();
+        if (!$this->tableExists('#__scheduler_tasks')) {
+            return ['tasks' => [], 'message' => 'Scheduler not available.'];
+        }
+
+        $query = $db->getQuery(true)
+            ->select(['id', 'title', 'type', 'execution_rules', 'state', 'last_execution', 'next_execution'])
+            ->from('#__scheduler_tasks')
+            ->order('id ASC');
+
+        return ['tasks' => $db->setQuery($query)->loadAssocList() ?: []];
+    }
+
+    public function runSchedulerTask(array $params): array
+    {
+        $taskId = (int) ($params['task_id'] ?? 0);
+        $php = PHP_BINARY ?: 'php';
+        $cli = escapeshellarg(JPATH_ROOT . '/cli/joomla.php');
+        $cmd = escapeshellarg($php) . ' ' . $cli . ' scheduler:run';
+
+        if ($taskId > 0) {
+            $cmd .= ' --id=' . $taskId;
+        }
+
+        exec($cmd . ' 2>&1', $output, $code);
+
+        return [
+            'task_id'   => $taskId ?: null,
+            'exit_code' => $code,
+            'output'    => implode("\n", $output),
+            'message'   => 'Scheduler task executed.',
+        ];
+    }
+
+    private function tableExists(string $table): bool
+    {
+        $db = Factory::getDbo();
+        return in_array($db->replacePrefix($table), $db->getTableList() ?: [], true);
+    }
 }

@@ -316,9 +316,20 @@ class RpcService
             return self::$cachedVersion;
         }
 
-        $manifest = JPATH_ADMINISTRATOR . '/components/com_jmcp/com_jmcp.xml';
-        if (!is_file($manifest)) {
-            $manifest = dirname(__DIR__, 4) . '/jmcp.xml';
+        $manifest = null;
+        foreach ([
+            JPATH_ADMINISTRATOR . '/components/com_jmcp/jmcp.xml',
+            JPATH_ADMINISTRATOR . '/components/com_jmcp/com_jmcp.xml',
+            dirname(__DIR__, 4) . '/jmcp.xml',
+        ] as $candidate) {
+            if (is_file($candidate)) {
+                $manifest = $candidate;
+                break;
+            }
+        }
+        if (empty($manifest)) {
+            self::$cachedVersion = '1.0.0';
+            return self::$cachedVersion;
         }
 
         if (is_file($manifest)) {

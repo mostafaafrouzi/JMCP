@@ -136,4 +136,87 @@ class ModuleExecutor
 
         return ['id' => $id, 'message' => 'Module deleted successfully.'];
     }
+
+    public function assignModuleToMenu(array $params): array
+    {
+        $moduleId = (int) ($params['module_id'] ?? 0);
+        $menuIds = array_map('intval', (array) ($params['menu_ids'] ?? []));
+        $mode = (string) ($params['mode'] ?? 'replace');
+
+        if ($moduleId <= 0) {
+            throw new \RuntimeException('module_id is required.');
+        }
+
+        $db = Factory::getDbo();
+        if ($mode === 'replace') {
+            $db->setQuery(
+                $db->getQuery(true)->delete('#__modules_menu')->where('moduleid = ' . $moduleId)
+            )->execute();
+        }
+
+        if ($menuIds === []) {
+            $db->insertObject('#__modules_menu', (object) ['moduleid' => $moduleId, 'menuid' => 0]);
+        } else {
+            foreach ($menuIds as $menuId) {
+                if ($mode === 'add') {
+                    $exists = (int) $db->setQuery(
+                        $db->getQuery(true)->select('COUNT(*)')->from('#__modules_menu')
+                            ->where('moduleid = ' . $moduleId)->where('menuid = ' . $menuId)
+                    )->loadResult();
+                    if ($exists > 0) {
+                        continue;
+                    }
+                }
+                $db->insertObject('#__modules_menu', (object) ['moduleid' => $moduleId, 'menuid' => $menuId]);
+            }
+        }
+
+        return ['module_id' => $moduleId, 'menu_ids' => $menuIds ?: [0], 'message' => 'Module menu assignment updated.'];
+    }
+
+    public function updateUtArticlesModule(array $params): array
+    {
+        $id = (int) ($params['id'] ?? 0);
+        if ($id <= 0) {
+            throw new \RuntimeException('Module id is required.');
+        }
+
+        $table = new Module(Factory::getDbo());
+        if (!$table->load($id)) {
+            throw new \RuntimeException(sprintf('Module %d not found.', $id));
+        }
+
+        if ($table->module !== 'mod_ut_articles_pro') {
+            throw new \RuntimeException('Module is not mod_ut_articles_pro.');
+        }
+
+        $registry = new Registry($table->params ?? '');
+        $map = [
+            'catid' => 'catid', 'count' => 'count', 'ordering' => 'ordering',
+            'show_intro' => 'show_intro', 'show_author' => 'show_author',
+            'show_category' => 'show_category', 'show_date' => 'show_date',
+        ];
+        foreach ($map as $param => $key) {
+            if (isset($params[$param])) {
+                $registry->set($key, $params[$param]);
+            }
+        }
+
+        if (isset($params['params']) && is_array($params['params'])) {
+            $registry->loadArray($params['params']);
+        }
+
+        $table->params = $registry->toString();
+        foreach (['title', 'position', 'published'] as $field) {
+            if (isset($params[$field])) {
+                $table->$field = $params[$field];
+            }
+        }
+
+        if (!$table->store()) {
+            throw new \RuntimeException('Failed to update UT articles module.');
+        }
+
+        return ['id' => $id, 'message' => 'UT articles module updated.'];
+    }
 }

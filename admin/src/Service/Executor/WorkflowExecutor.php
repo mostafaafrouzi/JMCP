@@ -7,6 +7,7 @@ namespace Joomla\Component\Jmcp\Administrator\Service\Executor;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Component\ComponentHelper;
+use Joomla\Component\Jmcp\Administrator\Service\ComponentParamsService;
 use Joomla\Component\Jmcp\Administrator\Service\PendingChangesService;
 use Joomla\Component\Jmcp\Administrator\Service\ToolRegistry;
 use Joomla\Component\Jmcp\Administrator\Service\WebhookService;
@@ -62,5 +63,40 @@ class WorkflowExecutor
         $config = ComponentHelper::getParams('com_jmcp');
         $service = new WebhookService($config);
         return ['events' => $service->listEvents((int) ($params['limit'] ?? 25))];
+    }
+
+    public function configureWebhook(array $params): array
+    {
+        $service = new ComponentParamsService();
+        $paramsRegistry = $service->get();
+
+        if (isset($params['url'])) {
+            $paramsRegistry->set('webhook_url', (string) $params['url']);
+        }
+        if (isset($params['secret'])) {
+            $paramsRegistry->set('webhook_secret', (string) $params['secret']);
+        }
+        if (isset($params['enabled'])) {
+            $paramsRegistry->set('webhook_enabled', (int) ((bool) $params['enabled']));
+        }
+
+        $service->save($paramsRegistry);
+
+        return [
+            'url'     => (string) $paramsRegistry->get('webhook_url', ''),
+            'enabled' => (bool) $paramsRegistry->get('webhook_enabled', 0),
+            'message' => 'Webhook configuration saved.',
+        ];
+    }
+
+    public function getWebhookConfig(array $params): array
+    {
+        $config = ComponentHelper::getParams('com_jmcp');
+
+        return [
+            'url'     => (string) $config->get('webhook_url', ''),
+            'enabled' => (bool) $config->get('webhook_enabled', 0),
+            'has_secret' => (string) $config->get('webhook_secret', '') !== '',
+        ];
     }
 }

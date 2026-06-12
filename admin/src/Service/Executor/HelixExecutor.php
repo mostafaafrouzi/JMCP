@@ -77,6 +77,62 @@ class HelixExecutor
         return ['positions' => $positions];
     }
 
+    public function getHelixMenuLayout(array $params): array
+    {
+        $this->assertHelix();
+        $menuId = (int) ($params['menu_id'] ?? 0);
+        if ($menuId <= 0) {
+            throw new \RuntimeException('menu_id is required.');
+        }
+
+        $db = Factory::getDbo();
+        $row = $db->setQuery(
+            $db->getQuery(true)->select(['id', 'title', 'params'])->from('#__menu')->where('id = ' . $menuId)
+        )->loadAssoc();
+
+        if (!$row) {
+            throw new \RuntimeException('Menu item not found.');
+        }
+
+        $paramsJson = json_decode((string) ($row['params'] ?? '{}'), true) ?: [];
+        $layout = $paramsJson['helixultimatemenulayout'] ?? $paramsJson['helixmenulayout'] ?? null;
+
+        return [
+            'menu_id'    => $menuId,
+            'title'      => $row['title'],
+            'has_layout' => $layout !== null,
+            'layout'     => is_string($layout) ? json_decode($layout, true) : $layout,
+        ];
+    }
+
+    public function updateHelixMenuLayout(array $params): array
+    {
+        $this->assertHelix();
+        $menuId = (int) ($params['menu_id'] ?? 0);
+        $layout = $params['layout'] ?? null;
+
+        if ($menuId <= 0 || $layout === null) {
+            throw new \RuntimeException('menu_id and layout are required.');
+        }
+
+        $db = Factory::getDbo();
+        $current = (string) $db->setQuery(
+            $db->getQuery(true)->select('params')->from('#__menu')->where('id = ' . $menuId)
+        )->loadResult();
+
+        $registry = new Registry($current);
+        $layoutValue = is_array($layout) ? json_encode($layout) : (string) $layout;
+        $registry->set('helixultimatemenulayout', $layoutValue);
+
+        $db->setQuery(
+            $db->getQuery(true)->update('#__menu')
+                ->set('params = ' . $db->quote($registry->toString()))
+                ->where('id = ' . $menuId)
+        )->execute();
+
+        return ['menu_id' => $menuId, 'message' => 'Helix menu layout updated.'];
+    }
+
     private function assertHelix(): void
     {
         if (!$this->detector->isInstalled('helixultimate')) {

@@ -8,6 +8,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\Component\Jmcp\Administrator\Service\PathGuard;
+use Joomla\Registry\Registry;
 
 class TemplateExecutor
 {
@@ -65,7 +66,13 @@ class TemplateExecutor
         $fields['id'] = $id;
 
         if (isset($fields['params']) && is_array($fields['params'])) {
-            $fields['params'] = json_encode($fields['params']);
+            $db = Factory::getDbo();
+            $current = (string) $db->setQuery(
+                $db->getQuery(true)->select('params')->from('#__template_styles')->where('id = ' . $id)
+            )->loadResult();
+            $registry = new Registry($current ?: '');
+            $registry->loadArray($fields['params']);
+            $fields['params'] = $registry->toString();
         }
 
         $row = (object) $fields;
@@ -98,6 +105,70 @@ class TemplateExecutor
         }
 
         return ['path' => $relative, 'message' => 'Template override created.'];
+    }
+
+    public function listTemplatePositions(array $params): array
+    {
+        $template = (string) ($params['template'] ?? $this->getActiveTemplate());
+        $clientId = (int) ($params['client_id'] ?? 0);
+        $xmlPath = $clientId === 1
+            ? JPATH_ADMINISTRATOR . '/templates/' . $template . '/templateDetails.xml'
+            : JPATH_ROOT . '/templates/' . $template . '/templateDetails.xml';
+
+        if (!is_readable($xmlPath)) {
+            throw new \RuntimeException('templateDetails.xml not found for ' . $template);
+        }
+
+        $xml = simplexml_load_file($xmlPath);
+        $positions = [];
+        if ($xml && isset($xml->positions->position)) {
+            foreach ($xml->positions->position as $pos) {
+                $positions[] = (string) $pos;
+            }
+        }
+
+        return ['template' => $template, 'positions' => $positions];
+    }
+
+    public function setDefaultTemplateStyle(array $params): array
+    {
+        $styleId = (int) ($params['style_id'] ?? 0);
+        $clientId = (int) ($params['client_id'] ?? 0);
+        $dryRun = (bool) ($params['dry_run'] ?? false);
+
+        if ($styleId <= 0) {
+            throw new \RuntimeException('style_id is required.');
+        }
+
+        $db = Factory::getDbo();
+        $style = $db->setQuery(
+            $db->getQuery(true)->select(['id', 'template', 'title'])->from('#__template_styles')
+                ->where('id = ' . $styleId)->where('client_id = ' . $clientId)
+        )->loadAssoc();
+
+        if (!$style) {
+            throw new \RuntimeException('Template style not found.');
+        }
+
+        if ($dryRun) {
+            return ['style_id' => $styleId, 'dry_run' => true, 'template' => $style['template']];
+        }
+
+        $db->setQuery(
+            $db->getQuery(true)->update('#__template_styles')->set('home = 0')
+                ->where('client_id = ' . $clientId)
+        )->execute();
+
+        $db->setQuery(
+            $db->getQuery(true)->update('#__template_styles')->set('home = 1')->where('id = ' . $styleId)
+        )->execute();
+
+        return [
+            'style_id' => $styleId,
+            'template' => $style['template'],
+            'title'    => $style['title'],
+            'message'  => 'Default template style set.',
+        ];
     }
 
     private function getActiveTemplate(): string

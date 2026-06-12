@@ -1,0 +1,16 @@
+{
+  "id": 13,
+  "fields": {
+    "params": {
+      "custom_css": "html, body { direction: rtl; text-align: right; }\n.sppb-row, .sppb-column { direction: rtl; }\n.navbar-nav { flex-direction: row-reverse; }",
+      "offcanvas_position": "left",
+      "copyright": "© {year} اتو سرویس ستاره — تعویض تخصصی روغن گیربکس",
+      "comingsoon_title": "به زودی بازمی‌گردیم",
+      "comingsoon_content": "در حال به‌روزرسانی سایت هستیم.",
+      "contact_phone": "۰۲۱-۸۸۷۷۶۶۵۵",
+      "contact_mobile": "۰۹۱۲-۳۳۴۴۵۵۶",
+      "contact_email": "info@setareh-auto.ir",
+      "related_article_title": "مقالات مرتبط"
+    }
+  }
+}

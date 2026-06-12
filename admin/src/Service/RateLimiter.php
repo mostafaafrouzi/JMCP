@@ -12,15 +12,13 @@ namespace Joomla\Component\Jmcp\Administrator\Service;
 
 defined('_JEXEC') or die;
 
-use Psr\SimpleCache\CacheInterface;
-
 class RateLimiter
 {
-    private CacheInterface $cache;
+    private JoomlaCache $cache;
     private int $maxRequests;
     private int $windowSeconds;
 
-    public function __construct(CacheInterface $cache, int $maxRequests = 60, int $windowSeconds = 60)
+    public function __construct(JoomlaCache $cache, int $maxRequests = 60, int $windowSeconds = 60)
     {
         $this->cache = $cache;
         $this->maxRequests = $maxRequests;

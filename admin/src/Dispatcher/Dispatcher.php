@@ -16,6 +16,12 @@ use Joomla\CMS\Dispatcher\ComponentDispatcher;
 
 class Dispatcher extends ComponentDispatcher
 {
+    protected function loadLanguage(): void
+    {
+        parent::loadLanguage();
+        $this->app->getLanguage()->load('com_jmcp', JPATH_ADMINISTRATOR . '/components/com_jmcp');
+    }
+
     public function dispatch(): void
     {
         $task = $this->input->get('task', '');

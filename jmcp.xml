@@ -6,7 +6,7 @@
     <authorEmail>info@jmcp.org</authorEmail>
     <copyright>Copyright (C) 2026 JMCP Team. All rights reserved.</copyright>
     <creationDate>2026-06-12</creationDate>
-    <version>2.2.2</version>
+    <version>1.0.0</version>
     <license>GPL-2.0-or-later</license>
     <description>COM_JMCP_XML_DESCRIPTION</description>
     <element>com_jmcp</element>

@@ -88,4 +88,37 @@ class CustomFieldExecutor
 
         return ['item_id' => $itemId, 'message' => 'Field values updated.'];
     }
+
+    public function updateCustomField(array $params): array
+    {
+        $id = (int) ($params['id'] ?? 0);
+        $fields = (array) ($params['fields'] ?? []);
+
+        if ($id <= 0 || $fields === []) {
+            throw new \RuntimeException('id and fields are required.');
+        }
+
+        if (isset($fields['params']) && is_array($fields['params'])) {
+            $fields['params'] = json_encode($fields['params']);
+        }
+
+        $fields['id'] = $id;
+        Factory::getDbo()->updateObject('#__fields', (object) $fields, 'id');
+
+        return ['id' => $id, 'message' => 'Custom field updated.'];
+    }
+
+    public function deleteCustomField(array $params): array
+    {
+        $id = (int) ($params['id'] ?? 0);
+        if ($id <= 0) {
+            throw new \RuntimeException('id is required.');
+        }
+
+        $db = Factory::getDbo();
+        $db->setQuery($db->getQuery(true)->delete('#__fields')->where('id = ' . $id))->execute();
+        $db->setQuery($db->getQuery(true)->delete('#__fields_values')->where('field_id = ' . $id))->execute();
+
+        return ['id' => $id, 'message' => 'Custom field deleted.'];
+    }
 }

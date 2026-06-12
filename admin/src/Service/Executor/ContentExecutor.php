@@ -114,9 +114,14 @@ class ContentExecutor
         $user  = Factory::getUser();
         $title = trim((string) ($params['title'] ?? ''));
 
+        $alias = trim((string) ($params['alias'] ?? ''));
+        if ($alias === '') {
+            $alias = OutputFilter::stringURLSafe($title);
+        }
+
         $data = [
             'title'      => $title,
-            'alias'      => OutputFilter::stringURLSafe($title),
+            'alias'      => $alias,
             'catid'      => (int) ($params['catid'] ?? 0),
             'introtext'  => $this->sanitizer->textToHtml((string) ($params['introtext'] ?? '')),
             'fulltext'   => $this->sanitizer->textToHtml((string) ($params['fulltext'] ?? '')),
@@ -329,5 +334,75 @@ class ContentExecutor
         }
 
         return ['id' => $id, 'message' => 'Category deleted successfully.'];
+    }
+
+    public function getArticleByAlias(array $params): array
+    {
+        $alias = trim((string) ($params['alias'] ?? ''));
+        if ($alias === '') {
+            throw new \RuntimeException('Article alias is required.');
+        }
+
+        $db = Factory::getDbo();
+        $query = $db->getQuery(true)
+            ->select(['id', 'title', 'alias', 'catid', 'state', 'language', 'created', 'modified'])
+            ->from($db->quoteName('#__content'))
+            ->where($db->quoteName('alias') . ' = ' . $db->quote($alias));
+
+        if (isset($params['catid'])) {
+            $query->where($db->quoteName('catid') . ' = ' . (int) $params['catid']);
+        }
+
+        $article = $db->setQuery($query)->loadAssoc();
+        if (!$article) {
+            throw new \RuntimeException(sprintf("Article with alias '%s' not found.", $alias));
+        }
+
+        return $article;
+    }
+
+    public function assignArticleTags(array $params): array
+    {
+        $articleId = (int) ($params['article_id'] ?? 0);
+        $tagIds = $params['tag_ids'] ?? [];
+
+        if ($articleId <= 0) {
+            throw new \RuntimeException('article_id is required.');
+        }
+        if (!is_array($tagIds) || $tagIds === []) {
+            throw new \RuntimeException('tag_ids array is required.');
+        }
+
+        $db = Factory::getDbo();
+        $typeAlias = 'com_content.article';
+
+        $db->setQuery(
+            $db->getQuery(true)
+                ->delete($db->quoteName('#__contentitem_tag_map'))
+                ->where($db->quoteName('type_alias') . ' = ' . $db->quote($typeAlias))
+                ->where($db->quoteName('content_item_id') . ' = ' . $articleId)
+        )->execute();
+
+        $tagIds = array_values(array_unique(array_map('intval', $tagIds)));
+        foreach ($tagIds as $tagId) {
+            if ($tagId <= 0) {
+                continue;
+            }
+            $row = (object) [
+                'type_alias'      => $typeAlias,
+                'core_content_id' => 0,
+                'content_item_id' => $articleId,
+                'tag_id'          => $tagId,
+                'tag_date'        => Factory::getDate()->toSql(),
+                'type_id'         => 0,
+            ];
+            $db->insertObject('#__contentitem_tag_map', $row);
+        }
+
+        return [
+            'article_id' => $articleId,
+            'tag_ids'    => $tagIds,
+            'message'    => 'Tags assigned successfully.',
+        ];
     }
 }

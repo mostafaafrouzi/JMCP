@@ -79,7 +79,7 @@ return new class implements ServiceProviderInterface {
                             $jLevel = \Joomla\CMS\Log\Log::DEBUG;
                             break;
                     }
-                    \Joomla\CMS\Log\Log::add((string)$message, $jLevel, 'jmcp', $context);
+                    \Joomla\CMS\Log\Log::add((string)$message, $jLevel, 'jmcp', null, $context);
                 }
             };
         });
