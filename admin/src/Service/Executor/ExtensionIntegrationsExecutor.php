@@ -80,12 +80,12 @@ class ExtensionIntegrationsExecutor
     {
         $this->assert('sh404sef');
         $db = Factory::getDbo();
-        $db->insertObject('#__sh404sef_urls', (object) [
-            'oldurl'  => (string) ($params['old_url'] ?? ''),
-            'newurl'  => (string) ($params['new_url'] ?? ''),
-            'rank'    => 0,
-            'dateadd' => Factory::getDate()->toSql(),
-        ]);
+        $row = new \stdClass();
+        $row->oldurl  = (string) ($params['old_url'] ?? '');
+        $row->newurl  = (string) ($params['new_url'] ?? '');
+        $row->rank    = 0;
+        $row->dateadd = Factory::getDate()->toSql();
+        $db->insertObject('#__sh404sef_urls', $row);
         return ['id' => (int) $db->insertid(), 'message' => 'Redirect created.'];
     }
 

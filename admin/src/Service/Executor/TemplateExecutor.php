@@ -68,7 +68,8 @@ class TemplateExecutor
             $fields['params'] = json_encode($fields['params']);
         }
 
-        Factory::getDbo()->updateObject('#__template_styles', (object) $fields, 'id');
+        $row = (object) $fields;
+        Factory::getDbo()->updateObject('#__template_styles', $row, 'id');
         return ['id' => $id, 'message' => 'Template style updated.'];
     }
 

@@ -25,14 +25,10 @@ class ComponentParamsService
         $row = $this->loadRow();
         $db  = Factory::getDbo();
 
-        $db->updateObject(
-            '#__extensions',
-            (object) [
-                'extension_id' => (int) $row->extension_id,
-                'params'       => $params->toString(),
-            ],
-            'extension_id'
-        );
+        $update = new \stdClass();
+        $update->extension_id = (int) $row->extension_id;
+        $update->params       = $params->toString();
+        $db->updateObject('#__extensions', $update, 'extension_id');
     }
 
     public function set(string $key, mixed $value): void

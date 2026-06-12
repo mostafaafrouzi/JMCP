@@ -60,8 +60,8 @@ class MultilingualExecutor
         $id = (int) ($params['id'] ?? 0);
         $fields = (array) ($params['fields'] ?? []);
         $fields['lang_id'] = $id;
-
-        Factory::getDbo()->updateObject('#__languages', (object) $fields, 'lang_id');
+        $row = (object) $fields;
+        Factory::getDbo()->updateObject('#__languages', $row, 'lang_id');
         return ['id' => $id, 'message' => 'Language updated.'];
     }
 
@@ -130,11 +130,11 @@ class MultilingualExecutor
         $db->setQuery($query)->execute();
 
         foreach ($associations as $lang => $itemId) {
-            $db->insertObject('#__associations', (object) [
-                'id'      => (int) $itemId,
-                'context' => $context,
-                'key'     => $key,
-            ]);
+            $row = new \stdClass();
+            $row->id      = (int) $itemId;
+            $row->context = $context;
+            $row->key     = $key;
+            $db->insertObject('#__associations', $row);
         }
     }
 

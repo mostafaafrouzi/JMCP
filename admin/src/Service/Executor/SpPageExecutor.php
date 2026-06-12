@@ -83,13 +83,15 @@ class SpPageExecutor
 
         if ($id > 0) {
             $data['id'] = $id;
-            $db->updateObject(self::TABLE, (object) $data, 'id');
+            $row = (object) $data;
+            $db->updateObject(self::TABLE, $row, 'id');
             $message = 'SP Page updated successfully.';
         } else {
             $data['created']    = $now;
             $data['created_by'] = $user->id ?: 0;
             $data['hits']       = 0;
-            $db->insertObject(self::TABLE, (object) $data);
+            $row = (object) $data;
+            $db->insertObject(self::TABLE, $row);
             $id = (int) $db->insertid();
             $message = 'SP Page created successfully.';
         }

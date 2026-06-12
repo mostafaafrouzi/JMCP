@@ -49,13 +49,13 @@ class PersistentMemoryService
             return ['id' => $existingId, 'key' => $key, 'message' => 'Memory updated.'];
         }
 
-        $db->insertObject(self::TABLE, (object) [
-            'mem_key'   => substr($key, 0, 191),
-            'mem_value' => $value,
-            'context'   => substr($context, 0, 64),
-            'created'   => $now,
-            'modified'  => $now,
-        ]);
+        $row = new \stdClass();
+        $row->mem_key   = substr($key, 0, 191);
+        $row->mem_value = $value;
+        $row->context   = substr($context, 0, 64);
+        $row->created   = $now;
+        $row->modified  = $now;
+        $db->insertObject(self::TABLE, $row);
 
         return ['id' => (int) $db->insertid(), 'key' => $key, 'message' => 'Memory stored.'];
     }

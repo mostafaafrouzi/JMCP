@@ -6,7 +6,7 @@
     <authorEmail>info@jmcp.org</authorEmail>
     <copyright>Copyright (C) 2026 JMCP Team. All rights reserved.</copyright>
     <creationDate>2026-06-12</creationDate>
-    <version>2.2.0</version>
+    <version>2.2.2</version>
     <license>GPL-2.0-or-later</license>
     <description>COM_JMCP_XML_DESCRIPTION</description>
     <element>com_jmcp</element>
@@ -28,6 +28,10 @@
             <folder>services</folder>
             <folder>language</folder>
         </files>
+        <languages>
+            <language tag="en-GB">site/language/en-GB/en-GB.com_jmcp.ini</language>
+            <language tag="fa-IR">site/language/fa-IR/fa-IR.com_jmcp.ini</language>
+        </languages>
     </site>
 
     <scriptfile>script.php</scriptfile>
@@ -67,6 +71,12 @@
             <folder>sql</folder>
             <folder>language</folder>
         </files>
+        <languages>
+            <language tag="en-GB">admin/language/en-GB/en-GB.com_jmcp.ini</language>
+            <language tag="en-GB">admin/language/en-GB/en-GB.com_jmcp.sys.ini</language>
+            <language tag="fa-IR">admin/language/fa-IR/fa-IR.com_jmcp.ini</language>
+            <language tag="fa-IR">admin/language/fa-IR/fa-IR.com_jmcp.sys.ini</language>
+        </languages>
     </administration>
 
     <config>

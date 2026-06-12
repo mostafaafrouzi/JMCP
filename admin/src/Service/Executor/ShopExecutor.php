@@ -58,9 +58,11 @@ class ShopExecutor
 
         if ($id > 0) {
             $data['virtuemart_product_id'] = $id;
-            $db->updateObject('#__virtuemart_products', (object) $data, 'virtuemart_product_id');
+            $row = (object) $data;
+            $db->updateObject('#__virtuemart_products', $row, 'virtuemart_product_id');
         } else {
-            $db->insertObject('#__virtuemart_products', (object) $data);
+            $row = (object) $data;
+            $db->insertObject('#__virtuemart_products', $row);
             $id = (int) $db->insertid();
         }
 
@@ -105,9 +107,11 @@ class ShopExecutor
 
         if ($id > 0) {
             $data['product_id'] = $id;
-            $db->updateObject('#__hikashop_product', (object) $data, 'product_id');
+            $row = (object) $data;
+            $db->updateObject('#__hikashop_product', $row, 'product_id');
         } else {
-            $db->insertObject('#__hikashop_product', (object) $data);
+            $row = (object) $data;
+            $db->insertObject('#__hikashop_product', $row);
             $id = (int) $db->insertid();
         }
 

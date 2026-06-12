@@ -66,12 +66,12 @@ class WebhookService
     private function logEvent(string $event, int $code, array $payload): void
     {
         try {
-            Factory::getDbo()->insertObject('#__jmcp_webhook_log', (object) [
-                'created'  => Factory::getDate()->toSql(),
-                'event'    => substr($event, 0, 64),
-                'http_code'=> $code,
-                'payload'  => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            ]);
+            $row = new \stdClass();
+            $row->created  = Factory::getDate()->toSql();
+            $row->event    = substr($event, 0, 64);
+            $row->http_code = $code;
+            $row->payload  = json_encode($payload, JSON_UNESCAPED_UNICODE);
+            Factory::getDbo()->insertObject('#__jmcp_webhook_log', $row);
         } catch (\Throwable $e) {
         }
     }

@@ -78,11 +78,11 @@ class CustomFieldExecutor
                         ->where('field_id = ' . (int) $fieldId)
                 )->execute();
             } else {
-                $db->insertObject('#__fields_values', (object) [
-                    'field_id' => (int) $fieldId,
-                    'item_id'  => $itemId,
-                    'value'    => (string) $value,
-                ]);
+                $row = new \stdClass();
+                $row->field_id = (int) $fieldId;
+                $row->item_id  = $itemId;
+                $row->value    = (string) $value;
+                $db->insertObject('#__fields_values', $row);
             }
         }
 

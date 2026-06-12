@@ -117,10 +117,10 @@ class Com_JmcpInstallerScript
         $registry = new Registry($row->params ?? '');
         $registry->set('domain_lock_host', \Joomla\CMS\Uri\Uri::getInstance()->getHost());
 
-        $db->updateObject('#__extensions', (object) [
-            'extension_id' => (int) $row->extension_id,
-            'params'       => $registry->toString(),
-        ], 'extension_id');
+        $update = new \stdClass();
+        $update->extension_id = (int) $row->extension_id;
+        $update->params       = $registry->toString();
+        $db->updateObject('#__extensions', $update, 'extension_id');
     }
 
     private function ensureDatabaseTables(): void
@@ -155,13 +155,9 @@ class Com_JmcpInstallerScript
         $registry = new Registry($row->params ?? '');
         $registry->set('mcp_bearer_token', bin2hex(random_bytes(32)));
 
-        $db->updateObject(
-            '#__extensions',
-            (object) [
-                'extension_id' => (int) $row->extension_id,
-                'params'       => $registry->toString(),
-            ],
-            'extension_id'
-        );
+        $update = new \stdClass();
+        $update->extension_id = (int) $row->extension_id;
+        $update->params       = $registry->toString();
+        $db->updateObject('#__extensions', $update, 'extension_id');
     }
 }
