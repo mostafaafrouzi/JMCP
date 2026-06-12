@@ -1,0 +1,69 @@
+name: Package and Release JMCP Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build_release:
+    name: Package Extension and Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install zip utility
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Make build script executable
+        run: chmod +x build.sh
+
+      - name: Build Extension ZIP
+        run: ./build.sh
+
+      - name: Verify package
+        run: |
+          test -f com_jmcp.zip
+          unzip -t com_jmcp.zip
+          unzip -l com_jmcp.zip | grep -E 'jmcp\.xml|script\.php|admin/|site/'
+          echo "Package size: $(du -h com_jmcp.zip | cut -f1)"
+
+      - name: Generate Changelog
+        run: |
+          current_tag="${GITHUB_REF_NAME}"
+          previous_tag="$(git describe --tags --abbrev=0 "${current_tag}^" 2>/dev/null || true)"
+          echo "Current tag: ${current_tag}"
+          if [ -n "${previous_tag}" ]; then
+            echo "Previous tag: ${previous_tag}"
+            log="$(git log "${previous_tag}..${current_tag}" --oneline)"
+          else
+            log="$(git log --oneline)"
+          fi
+          {
+            echo "CHANGELOG<<EOF"
+            echo "${log}"
+            echo "EOF"
+          } >> "${GITHUB_ENV}"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: com_jmcp.zip
+          generate_release_notes: true
+          body: |
+            ## JMCP Joomla Component Release ${{ github.ref_name }}
+
+            Installable ZIP for **JMCP (Joomla Model Context Protocol Server)**.
+            Compatible with Joomla 4, 5, and 6.
+
+            ### Changelog / لیست تغییرات
+            ${{ env.CHANGELOG }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

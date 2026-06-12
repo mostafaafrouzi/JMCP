@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Validate package build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install zip utility
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Build Extension ZIP
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Verify package contents
+        run: |
+          test -f com_jmcp.zip
+          unzip -t com_jmcp.zip
+          unzip -l com_jmcp.zip | grep -q 'jmcp.xml'
+          unzip -l com_jmcp.zip | grep -q 'admin/src/Service/RpcService.php'
+          unzip -l com_jmcp.zip | grep -q 'site/mcp-http-bridge.js'
+
+      - name: Verify manifest version matches update.xml
+        run: |
+          manifest_version="$(grep -oP '(?<=<version>)[^<]+' jmcp.xml | head -1)"
+          update_version="$(grep -oP '(?<=<version>)[^<]+' update.xml | head -1)"
+          echo "jmcp.xml version: ${manifest_version}"
+          echo "update.xml version: ${update_version}"
+          test "${manifest_version}" = "${update_version}"

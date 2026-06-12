@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" method="upgrade">
+    <name>JMCP - Joomla MCP Server</name>
+    <author>JMCP Team</author>
+    <authorUrl>https://github.com/mostafaafrouzi/JMCP</authorUrl>
+    <authorEmail>info@jmcp.org</authorEmail>
+    <copyright>Copyright (C) 2026 JMCP Team. All rights reserved.</copyright>
+    <creationDate>2026-06-12</creationDate>
+    <version>2.2.0</version>
+    <license>GPL-2.0-or-later</license>
+    <description>COM_JMCP_XML_DESCRIPTION</description>
+    <element>com_jmcp</element>
+    <namespace path="src">Joomla\Component\Jmcp</namespace>
+
+    <extension>
+        <component>Joomla\Component\Jmcp\Administrator\Extension\JmcpComponent</component>
+        <providers>
+            <provider path="services/provider.php"/>
+        </providers>
+    </extension>
+
+    <site>
+        <namespace path="src">Joomla\Component\Jmcp\Site</namespace>
+        <files folder="site">
+            <filename>jmcp.php</filename>
+            <filename>mcp-http-bridge.js</filename>
+            <folder>src</folder>
+            <folder>services</folder>
+            <folder>language</folder>
+        </files>
+    </site>
+
+    <scriptfile>script.php</scriptfile>
+
+    <updateservers>
+        <server type="extension" name="JMCP Updates" priority="1">https://raw.githubusercontent.com/mostafaafrouzi/JMCP/main/update.xml</server>
+    </updateservers>
+
+    <install>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file>
+        </sql>
+    </install>
+    <uninstall>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/uninstall.mysql.utf8.sql</file>
+        </sql>
+    </uninstall>
+    <update>
+        <schemas>
+            <schemapath type="mysql">sql/updates/mysql</schemapath>
+        </schemas>
+    </update>
+
+    <administration>
+        <namespace path="src">Joomla\Component\Jmcp</namespace>
+        <menu>COM_JMCP_MENU_DASHBOARD</menu>
+        <submenu>
+            <menu link="option=com_jmcp">COM_JMCP_MENU_DASHBOARD</menu>
+        </submenu>
+        <files folder="admin">
+            <filename>jmcp.php</filename>
+            <filename>access.xml</filename>
+            <folder>src</folder>
+            <folder>tmpl</folder>
+            <folder>services</folder>
+            <folder>sql</folder>
+            <folder>language</folder>
+        </files>
+    </administration>
+
+    <config>
+        <fields name="params">
+            <fieldset name="basic" label="COM_JMCP_CONFIG_FIELDSET_BASIC">
+                <field name="mcp_enabled" type="radio" label="COM_JMCP_CONFIG_MCP_ENABLED" description="COM_JMCP_CONFIG_MCP_ENABLED_DESC" default="1" class="btn-group">
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field name="server_name" type="text" label="COM_JMCP_CONFIG_SERVER_NAME" description="COM_JMCP_CONFIG_SERVER_NAME_DESC" default="joomla-mcp-server" />
+                <field name="require_auth" type="radio" label="COM_JMCP_CONFIG_REQUIRE_AUTH" description="COM_JMCP_CONFIG_REQUIRE_AUTH_DESC" default="1" class="btn-group">
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field name="mcp_bearer_token" type="password" label="COM_JMCP_CONFIG_MCP_BEARER_TOKEN" description="COM_JMCP_CONFIG_MCP_BEARER_TOKEN_DESC" filter="raw" />
+                <field name="ip_allow_list" type="textarea" label="COM_JMCP_CONFIG_IP_ALLOW_LIST" description="COM_JMCP_CONFIG_IP_ALLOW_LIST_DESC" rows="2" cols="40" />
+                <field name="rate_limit_requests" type="integer" label="COM_JMCP_CONFIG_RATE_LIMIT_REQUESTS" description="COM_JMCP_CONFIG_RATE_LIMIT_REQUESTS_DESC" default="60" />
+                <field name="rate_limit_window" type="integer" label="COM_JMCP_CONFIG_RATE_LIMIT_WINDOW" description="COM_JMCP_CONFIG_RATE_LIMIT_WINDOW_DESC" default="60" />
+                <field name="cache_ttl" type="integer" label="COM_JMCP_CONFIG_CACHE_TTL" description="COM_JMCP_CONFIG_CACHE_TTL_DESC" default="60" />
+                <field name="allowed_origins" type="textarea" label="COM_JMCP_CONFIG_ALLOWED_ORIGINS" description="COM_JMCP_CONFIG_ALLOWED_ORIGINS_DESC" rows="2" cols="40" />
+                <field name="trusted_proxies" type="textarea" label="COM_JMCP_CONFIG_TRUSTED_PROXIES" description="COM_JMCP_CONFIG_TRUSTED_PROXIES_DESC" rows="2" cols="40" />
+            </fieldset>
+            <fieldset name="capabilities" label="COM_JMCP_CONFIG_FIELDSET_CAPABILITIES">
+                <field name="allow_file_read" type="radio" label="COM_JMCP_CONFIG_ALLOW_FILE_READ" description="COM_JMCP_CONFIG_ALLOW_FILE_READ_DESC" default="1" class="btn-group">
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field name="allow_file_write" type="radio" label="COM_JMCP_CONFIG_ALLOW_FILE_WRITE" description="COM_JMCP_CONFIG_ALLOW_FILE_WRITE_DESC" default="0" class="btn-group">
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field name="allow_sql_exec" type="radio" label="COM_JMCP_CONFIG_ALLOW_SQL_EXEC" description="COM_JMCP_CONFIG_ALLOW_SQL_EXEC_DESC" default="0" class="btn-group">
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field name="allow_php_exec" type="radio" label="COM_JMCP_CONFIG_ALLOW_PHP_EXEC" description="COM_JMCP_CONFIG_ALLOW_PHP_EXEC_DESC" default="0" class="btn-group">
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field name="allow_cli_exec" type="radio" label="COM_JMCP_CONFIG_ALLOW_CLI_EXEC" description="COM_JMCP_CONFIG_ALLOW_CLI_EXEC_DESC" default="0" class="btn-group">
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+            </fieldset>
+            <fieldset name="abilities" label="COM_JMCP_CONFIG_FIELDSET_ABILITIES">
+                <field name="disabled_tools" type="textarea" label="COM_JMCP_CONFIG_DISABLED_TOOLS" description="COM_JMCP_CONFIG_DISABLED_TOOLS_DESC" rows="4" cols="60" filter="raw" />
+                <field name="domain_lock" type="radio" label="COM_JMCP_CONFIG_DOMAIN_LOCK" description="COM_JMCP_CONFIG_DOMAIN_LOCK_DESC" default="0" class="btn-group">
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field name="domain_lock_host" type="text" label="COM_JMCP_CONFIG_DOMAIN_LOCK_HOST" description="COM_JMCP_CONFIG_DOMAIN_LOCK_HOST_DESC" />
+                <field name="production_warning" type="radio" label="COM_JMCP_CONFIG_PRODUCTION_WARNING" description="COM_JMCP_CONFIG_PRODUCTION_WARNING_DESC" default="1" class="btn-group">
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field name="production_block_destructive" type="radio" label="COM_JMCP_CONFIG_PRODUCTION_BLOCK_DESTRUCTIVE" description="COM_JMCP_CONFIG_PRODUCTION_BLOCK_DESTRUCTIVE_DESC" default="0" class="btn-group">
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+            </fieldset>
+            <fieldset name="tier" label="COM_JMCP_CONFIG_FIELDSET_TIER">
+                <field name="license_key" type="text" label="COM_JMCP_CONFIG_LICENSE_KEY" description="COM_JMCP_CONFIG_LICENSE_KEY_DESC" />
+                <field name="license_key_accepted" type="hidden" default="0" />
+            </fieldset>
+            <fieldset name="webhooks" label="COM_JMCP_CONFIG_FIELDSET_WEBHOOKS">
+                <field name="webhook_url" type="url" label="COM_JMCP_CONFIG_WEBHOOK_URL" description="COM_JMCP_CONFIG_WEBHOOK_URL_DESC" />
+                <field name="webhook_secret" type="password" label="COM_JMCP_CONFIG_WEBHOOK_SECRET" description="COM_JMCP_CONFIG_WEBHOOK_SECRET_DESC" filter="raw" />
+            </fieldset>
+            <fieldset name="monitoring" label="COM_JMCP_CONFIG_FIELDSET_MONITORING">
+                <field name="metrics_enabled" type="radio" label="COM_JMCP_CONFIG_METRICS_ENABLED" description="COM_JMCP_CONFIG_METRICS_ENABLED_DESC" default="1" class="btn-group">
+                    <option value="0">JNO</option>
+                    <option value="1">JYES</option>
+                </field>
+                <field name="metrics_retention_days" type="integer" label="COM_JMCP_CONFIG_METRICS_RETENTION_DAYS" description="COM_JMCP_CONFIG_METRICS_RETENTION_DAYS_DESC" default="30" min="1" max="365" />
+            </fieldset>
+        </fields>
+    </config>
+</extension>

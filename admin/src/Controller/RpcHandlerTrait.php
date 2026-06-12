@@ -1,0 +1,330 @@
+<?php
+
+/**
+ * @package     JMCP - Joomla MCP Server
+ * @copyright   Copyright (C) 2026 JMCP Team. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE
+ */
+
+declare(strict_types=1);
+
+namespace Joomla\Component\Jmcp\Administrator\Controller;
+
+defined('_JEXEC') or die;
+
+use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Factory;
+use Joomla\CMS\Uri\Uri;
+use Joomla\Component\Jmcp\Administrator\Extension\JmcpComponent;
+use Joomla\Component\Jmcp\Administrator\Service\AuthService;
+use Joomla\Component\Jmcp\Administrator\Service\CacheService;
+use Joomla\Component\Jmcp\Administrator\Service\JoomlaCache;
+use Joomla\Component\Jmcp\Administrator\Service\JsonRpc;
+use Joomla\Component\Jmcp\Administrator\Service\MetricsService;
+use Joomla\Component\Jmcp\Administrator\Service\PolicyService;
+use Joomla\Component\Jmcp\Administrator\Service\RateLimiter;
+use Joomla\Component\Jmcp\Administrator\Service\RpcService;
+use Joomla\Component\Jmcp\Administrator\Service\SchemaValidator;
+use Joomla\Component\Jmcp\Administrator\Service\ToolRegistry;
+use Joomla\Registry\Registry;
+use Psr\Log\LoggerInterface;
+
+/**
+ * Shared RPC request handling logic for both admin and site controllers.
+ */
+trait RpcHandlerTrait
+{
+    public function sse(): void
+    {
+        $app = Factory::getApplication();
+        $params = ComponentHelper::getParams('com_jmcp');
+
+        $this->handleCors($params);
+
+        // Authenticate request before opening stream
+        $authService = $this->resolveService(AuthService::class) ?? new AuthService($params);
+        $authError = $authService->authenticate();
+        if ($authError !== null) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code($authError['code'] === JsonRpc::UNAUTHORIZED ? 401 : 403);
+            echo json_encode(JsonRpc::errorResponse(null, $authError['code'], $authError['error']));
+            $app->close();
+            return;
+        }
+
+        $sessionId = bin2hex(random_bytes(16));
+
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('Connection: keep-alive');
+        header('X-Accel-Buffering: no');
+
+        // Determine posting URL
+        $option = $app->input->getCmd('option', 'com_jmcp');
+        $postUrl = Uri::root() . 'index.php?option=' . $option . '&task=rpc.handle&sessionId=' . $sessionId;
+
+        echo "event: endpoint\n";
+        echo "data: " . $postUrl . "\n\n";
+
+        if (ob_get_level() > 0) {
+            ob_flush();
+        }
+        flush();
+
+        $cache = new JoomlaCache('jmcp_sse');
+        $startTime = time();
+        $lastPingTime = $startTime;
+        $timeout = 3600; // Keep-alive for 1 hour maximum
+
+        while (time() - $startTime < $timeout) {
+            if (connection_aborted()) {
+                break;
+            }
+
+            $message = $cache->get($sessionId);
+            if ($message) {
+                echo "event: message\n";
+                echo "data: " . $message . "\n\n";
+
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
+                flush();
+
+                $cache->delete($sessionId);
+            }
+
+            // Send keep-alive ping every 15 seconds
+            if ((time() - $lastPingTime) >= 15) {
+                echo ": keep-alive\n\n";
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
+                flush();
+                $lastPingTime = time();
+            }
+
+            usleep(200000); // Sleep 200ms
+        }
+
+        $app->close();
+    }
+
+    public function handle(): void
+    {
+        $app = Factory::getApplication();
+        $sessionId = $app->input->get('sessionId', '', 'string');
+
+        // If GET request without sessionId, serve as SSE connection stream
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && empty($sessionId)) {
+            $this->sse();
+            return;
+        }
+
+        $startTime = microtime(true);
+        $context   = $app->getName() === 'administrator' ? 'admin' : 'site';
+        $clientIp  = $app->input->server->getString('REMOTE_ADDR', '');
+
+        header('Content-Type: application/json; charset=utf-8');
+
+        $params = ComponentHelper::getParams('com_jmcp');
+
+        $this->handleCors($params);
+
+        // Authenticate request
+        $authService = $this->resolveService(AuthService::class) ?? new AuthService($params);
+        $authError = $authService->authenticate();
+        if ($authError !== null) {
+            $code = $authError['code'] === JsonRpc::UNAUTHORIZED ? 401 : 403;
+            http_response_code($code);
+            echo json_encode(JsonRpc::errorResponse(null, $authError['code'], $authError['error']));
+            $this->recordMetric($startTime, '', '', 'auth_failed', $authError['code'], $code, $clientIp, $context);
+            $app->close();
+            return;
+        }
+
+        // Rate limit check
+        $rateLimiter = $this->resolveService(RateLimiter::class) ?? $this->createRateLimiter($params);
+        $identifier = $app->input->server->getString('REMOTE_ADDR', 'unknown');
+        $rateLimit = $rateLimiter->checkLimit($identifier);
+        if ($rateLimit !== null) {
+            header('Retry-After: ' . $rateLimit['retry_after']);
+            http_response_code(429);
+            echo json_encode(JsonRpc::errorResponse(null, JsonRpc::RATE_LIMITED, 'Rate limit exceeded'));
+            $this->recordMetric($startTime, '', '', 'rate_limited', JsonRpc::RATE_LIMITED, 429, $clientIp, $context);
+            $app->close();
+            return;
+        }
+
+        // Parse Request Body
+        $body = file_get_contents('php://input') ?: '';
+        $request = JsonRpc::parseRequest($body);
+
+        if ($request === null) {
+            http_response_code(400);
+            echo json_encode(JsonRpc::errorResponse(null, JsonRpc::INVALID_REQUEST, 'Invalid JSON-RPC 2.0 request'));
+            $this->recordMetric($startTime, '', '', 'invalid_request', JsonRpc::INVALID_REQUEST, 400, $clientIp, $context);
+            $app->close();
+            return;
+        }
+
+        $method   = (string) ($request['method'] ?? '');
+        $toolName = $this->extractToolName($request);
+
+        // Process request using RpcService
+        $rpcService = $this->resolveService(RpcService::class) ?? $this->createRpcService($params);
+        $response = $rpcService->handle($request);
+
+        if ($response === null) {
+            http_response_code(204);
+            $this->recordMetric($startTime, $method, $toolName, 'ok', null, 204, $clientIp, $context);
+            $app->close();
+            return;
+        }
+
+        $httpStatus = 200;
+        if (isset($response['error'])) {
+            $httpStatus = match ($response['error']['code']) {
+                JsonRpc::UNAUTHORIZED => 401,
+                JsonRpc::RATE_LIMITED => 429,
+                default => 200,
+            };
+        }
+
+        $this->recordMetric(
+            $startTime,
+            $method,
+            $toolName,
+            isset($response['error']) ? 'error' : 'ok',
+            $response['error']['code'] ?? null,
+            $httpStatus,
+            $clientIp,
+            $context
+        );
+
+        $jsonResponse = json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        // If SSE session, cache the result and acknowledge HTTP 202
+        if (!empty($sessionId)) {
+            $sseCache = new JoomlaCache('jmcp_sse');
+            $sseCache->set($sessionId, $jsonResponse, 30);
+            http_response_code(202);
+            echo json_encode(['status' => 'accepted', 'sessionId' => $sessionId]);
+        } else {
+            http_response_code($httpStatus);
+            echo $jsonResponse;
+        }
+
+        $app->close();
+    }
+
+    private function handleCors(Registry $params): void
+    {
+        $allowedOrigins = array_filter(array_map('trim', explode(',', (string) $params->get('allowed_origins', ''))));
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+        if (!empty($allowedOrigins) && !empty($origin) && in_array($origin, $allowedOrigins, true)) {
+            header('Access-Control-Allow-Origin: ' . $origin);
+            header('Vary: Origin');
+        }
+
+        header('Access-Control-Allow-Methods: POST, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+        header('Access-Control-Max-Age: 3600');
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            header('Content-Length: 0');
+            http_response_code(204);
+            Factory::getApplication()->close();
+        }
+    }
+
+    /**
+     * Resolve a service from the DI container if available.
+     */
+    private function resolveService(string $className): ?object
+    {
+        $container = JmcpComponent::getServiceContainer();
+        if ($container !== null && $container->has($className)) {
+            return $container->get($className);
+        }
+        return null;
+    }
+
+    /**
+     * Record a request in the metrics logs table.
+     */
+    private function recordMetric(
+        float $startTime,
+        string $method,
+        string $toolName,
+        string $status,
+        ?int $errorCode,
+        int $httpStatus,
+        string $clientIp,
+        string $context
+    ): void {
+        $metrics = $this->resolveService(MetricsService::class)
+            ?? new MetricsService(ComponentHelper::getParams('com_jmcp'));
+
+        $metrics->record([
+            'created'     => Factory::getDate()->toSql(),
+            'method'      => $method,
+            'tool_name'   => $toolName,
+            'status'      => $status,
+            'error_code'  => $errorCode,
+            'http_status' => $httpStatus,
+            'duration_ms' => (int) round((microtime(true) - $startTime) * 1000),
+            'client_ip'   => $clientIp,
+            'context'     => $context,
+        ]);
+    }
+
+    private function extractToolName(array $request): string
+    {
+        if (($request['method'] ?? '') === 'tools/call') {
+            return (string) ($request['params']['name'] ?? '');
+        }
+        return '';
+    }
+
+    private function createRateLimiter(Registry $params): RateLimiter
+    {
+        $cacheBackend = new JoomlaCache('com_jmcp_ratelimit');
+        return new RateLimiter(
+            $cacheBackend,
+            (int) $params->get('rate_limit_requests', 60),
+            (int) $params->get('rate_limit_window', 60)
+        );
+    }
+
+    private function createRpcService(Registry $params): RpcService
+    {
+        $serverName = (string) $params->get('server_name', 'joomla-mcp-server');
+
+        $container = JmcpComponent::getServiceContainer();
+        if ($container !== null && $container->has(LoggerInterface::class)) {
+            $logger = $container->get(LoggerInterface::class);
+        } else {
+            $logger = new class implements LoggerInterface {
+                public function emergency($message, array $context = []): void {}
+                public function alert($message, array $context = []): void {}
+                public function critical($message, array $context = []): void {}
+                public function error($message, array $context = []): void {}
+                public function warning($message, array $context = []): void {}
+                public function notice($message, array $context = []): void {}
+                public function info($message, array $context = []): void {}
+                public function debug($message, array $context = []): void {}
+                public function log($level, $message, array $context = []): void {}
+            };
+        }
+
+        $cacheBackend = new JoomlaCache('com_jmcp');
+        $cache = new CacheService($cacheBackend, (int) $params->get('cache_ttl', 60));
+        $toolRegistry = new ToolRegistry();
+        $validator = new SchemaValidator();
+        $policy = new PolicyService($params);
+
+        return new RpcService($cache, $policy, $logger, $toolRegistry, $validator, $serverName, $params);
+    }
+}

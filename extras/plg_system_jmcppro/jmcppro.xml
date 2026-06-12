@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="system" method="upgrade">
+    <name>PLG_SYSTEM_JMCPPRO</name>
+    <author>JMCP Team</author>
+    <version>1.0.0-dev</version>
+    <description>PLG_SYSTEM_JMCPPRO_XML_DESCRIPTION</description>
+    <namespace path="src">Joomla\Plugin\System\Jmcppro</namespace>
+    <files>
+        <filename plugin="jmcppro">jmcppro.php</filename>
+        <folder>language</folder>
+    </files>
+    <languages folder="language">
+        <language tag="en-GB">en-GB/plg_system_jmcppro.ini</language>
+        <language tag="en-GB">en-GB/plg_system_jmcppro.sys.ini</language>
+        <language tag="fa-IR">fa-IR/plg_system_jmcppro.ini</language>
+        <language tag="fa-IR">fa-IR/plg_system_jmcppro.sys.ini</language>
+    </languages>
+</extension>
