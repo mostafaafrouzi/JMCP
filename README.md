@@ -14,6 +14,18 @@
 
 ---
 
+## v1.2.0 — SP Page Builder designer
+
+| Metric | Value |
+|--------|-------|
+| New designer tools | **~25** (`sp_add_row`, `sp_add_addon`, …) |
+| Editor compatibility | Column `width`, `text`/`content` sync |
+| Large page CSS | `sp_set_page_css` + optional `media_path` |
+
+See [CHANGELOG.md](CHANGELOG.md) for the full list.
+
+---
+
 ## v1.0.0 — First Public Release
 
 | Metric | Value |
@@ -31,7 +43,7 @@
 | Menus & modules | `create_menu_item`, `update_module`, `assign_module_to_menu` |
 | Site rebrand | `site_rebrand`, `search_site_content`, `update_global_config` |
 | VirtueMart | `virtuemart_*` (products, prices, categories, vendor, config) |
-| SP Page Builder | `save_sp_page`, `bulk_replace_sp_content`, `update_sp_page_meta` |
+| SP Page Builder | `sp_add_row`, `sp_add_addon`, `sp_save_page_design`, `save_sp_page`, `sp_set_page_css` |
 | Helix / templates | `update_helix_params`, `update_template_style`, `list_template_positions` |
 | SEO | `update_article_seo_meta`, `create_joomla_redirect`, `update_schemaorg_for_item` |
 | Multilingual | `update_content_language`, `set_article_associations` |
@@ -115,7 +127,7 @@ Ask your AI to:
 | **Maintenance** | `bulk_content_replace`, `search_site_content`, `site_rebrand` |
 | **Media** | list/upload/update (needs `allow_file_write` for upload) |
 | **SEO** | analyze, meta, redirects, schema.org, finder |
-| **Builders** | SP Page Builder (pages, collections, bulk replace) |
+| **Builders** | SP Page Builder — designer tools (`sp_add_row`, `sp_add_addon`, `sp_save_page_design`) and legacy (`save_sp_page`, `bulk_replace_sp_content`) |
 | **Helix** | layout, params, menu mega-layout |
 | **Shops** | VirtueMart, HikaShop, J2Commerce |
 | **Integrations** | Akeeba, RSForm, sh404SEF, JCE, AcyMailing |
@@ -123,6 +135,23 @@ Ask your AI to:
 | **Users & ops** | users, banners, scheduler, component params |
 
 Run `discover_tools` after install for the full live list on your site.
+
+### SP Page Builder — native designer workflow
+
+Build pages like the visual editor (Row → Column → Addon). **Do not use `raw_html`** for normal layouts.
+
+| Step | Tool |
+|------|------|
+| Create empty page | `save_sp_page` with `title`, `content: "[]"` |
+| Or clone layout | `sp_create_page_from_template` |
+| Add structure | `sp_add_row` (`12`, `6.0+6.0`, …) |
+| Add content | `sp_add_addon` (`heading`, `text_block`, `button`, `image`) |
+| Edit fields | `sp_set_addon_field`, `sp_set_addon_style_tab` |
+| Validate + save | `sp_validate_page` → `sp_save_page_design` |
+| Large CSS | `upload_media` → `sp_set_page_css` with `media_path` |
+| Fix old pages | `sp_repair_page_layout` (column `width` missing) |
+
+Prompt skill: `design-sp-page`.
 
 ---
 
@@ -141,21 +170,25 @@ Run `discover_tools` after install for the full live list on your site.
 ## Development
 
 ```bash
-./build.sh   # produces com_jmcp.zip
+./build.sh   # produces com_jmcp.zip (admin/ + site/ only — no dev/ scripts)
 ```
 
-### Test tools locally
+PowerShell helpers under `dev/` are for **local MCP testing only** and are not part of the Joomla package. See [dev/README.md](dev/README.md).
 
 ```powershell
-cd tools
+cd dev/mcp-client
+$env:JMCP_TOKEN = "your-token"
+$env:JMCP_URL   = "https://your-site/index.php?option=com_jmcp&task=rpc.handle"
 .\mcp-session.ps1 -Tool "discover_tools" -ToolArgs @{}
-.\test-all-tools.ps1
 ```
+
+Examples: `dev/examples/sp-native-test.ps1` (verify column widths without repair), `dev/examples/apple-home/apply-apple-css.ps1`.
 
 ---
 
 ## Documentation
 
+- [CHANGELOG.md](CHANGELOG.md) — release notes
 - [ROADMAP.md](ROADMAP.md) — development phases and status
 - [LICENSE](LICENSE) — GPL-2.0-or-later
 

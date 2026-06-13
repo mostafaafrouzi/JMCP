@@ -70,14 +70,15 @@ class DiscoverExecutor
             '2. Use discover_tools to see enabled tools and integrations.',
             '3. Trash articles before permanent delete (force=false).',
             '4. For shops: detect_installed_shops then virtuemart_list_products / virtuemart_update_product / virtuemart_update_category.',
-            '5. For SP Page Builder: get_sp_page reads content column; save_sp_page and bulk_replace_sp_content write it.',
-            '6. For site-wide text changes: search_site_content then bulk_content_replace (preset sp_pages, articles, menus, etc.).',
-            '7. For full rebrand: site_rebrand(brand, old_brand) with dry_run=true first, then run_cache_clean.',
-            '8. VirtueMart: virtuemart_set_product_price, virtuemart_assign_product_categories, virtuemart_manage_product_media.',
-            '9. SP: update_sp_page_meta, list_sp_page_modules, bulk_replace_sp_content; Helix: get/update_helix_menu_layout.',
-            '10. Core ops: update_component_params, finder_rebuild_index, toggle_extension, create/update_user.',
-            '11. For SEO: analyze_page_seo then update_schemaorg_for_item.',
-            '12. Use create_pending_change for destructive ops on production sites.',
+            '5. For SP Page Builder design: sp_get_page_tree, sp_get_addon_blueprint, sp_set_addon_field, sp_set_addon_style_tab, sp_add_row, sp_add_addon, sp_clone_row, sp_clone_addon, sp_add_repeatable_item, sp_insert_section, sp_save_page_design, sp_validate_page, sp_repair_page_layout, sp_set_page_css (use media_path for large CSS). Skill: design-sp-page.',
+            '6. For SP raw JSON: get_sp_page / save_sp_page / bulk_replace_sp_content.',
+            '7. For site-wide text changes: search_site_content then bulk_content_replace (preset sp_pages, articles, menus, etc.).',
+            '8. For full rebrand: site_rebrand(brand, old_brand) with dry_run=true first, then run_cache_clean.',
+            '9. VirtueMart: virtuemart_set_product_price, virtuemart_assign_product_categories, virtuemart_manage_product_media.',
+            '10. SP meta: update_sp_page_meta, list_sp_page_modules; Helix: get/update_helix_menu_layout.',
+            '11. Core ops: update_component_params, finder_rebuild_index, toggle_extension, create/update_user.',
+            '12. For SEO: analyze_page_seo then update_schemaorg_for_item.',
+            '13. Use create_pending_change for destructive ops on production sites.',
         ]);
     }
 }

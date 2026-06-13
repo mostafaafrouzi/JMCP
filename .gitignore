@@ -35,6 +35,7 @@ build/
 tmp/
 tmp-*.json
 
-# Local MCP test artifacts
-tools/import-mrautomat-log.csv
+# Local dev scripts (not in com_jmcp.zip)
+dev/scripts/legacy/
+dev/scripts/legacy/*.json
 

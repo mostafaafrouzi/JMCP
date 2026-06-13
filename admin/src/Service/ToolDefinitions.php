@@ -25,7 +25,9 @@ class ToolDefinitions
             self::phase7(),
             self::phase8(),
             self::phase9(),
-            self::phase10()
+            self::phase10(),
+            self::phase11(),
+            self::phase12()
         );
     }
 
@@ -314,6 +316,51 @@ class ToolDefinitions
             self::t('get_webhook_config', 'Read JMCP webhook configuration (no secret).', ['type' => 'object'], 'read'),
             self::t('create_site_snapshot', 'Export key site tables to JSON snapshot.', ['type' => 'object', 'properties' => ['label' => ['type' => 'string'], 'tables' => ['type' => 'array', 'items' => ['type' => 'string']]]], 'write'),
             self::t('restore_site_snapshot', 'Restore site tables from JSON snapshot.', ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'tables' => ['type' => 'array', 'items' => ['type' => 'string']], 'dry_run' => ['type' => 'boolean']], 'required' => ['path']], 'destructive'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private static function phase11(): array
+    {
+        $pathSchema = ['type' => 'string', 'description' => 'Node path e.g. rows[0].columns[0].addons[0]'];
+
+        return [
+            self::t('sp_list_addons', 'List installed SP Page Builder addons with types.', ['type' => 'object'], 'read'),
+            self::t('sp_get_addon_schema', 'Get field schema and defaults for an SP addon (button, heading, image, …).', ['type' => 'object', 'properties' => ['addon_name' => ['type' => 'string']], 'required' => ['addon_name']], 'read'),
+            self::t('sp_get_page_tree', 'Get navigable tree of rows/columns/addons for an SP page.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'field_preview' => ['type' => 'boolean']], 'required' => ['page_id']], 'read'),
+            self::t('sp_get_node', 'Get full JSON for a row, column, or addon by path.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'path' => $pathSchema], 'required' => ['page_id', 'path']], 'read'),
+            self::t('sp_set_addon_field', 'Set one addon settings field (content or style). Use dot notation for nested fields.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'path' => $pathSchema, 'field' => ['type' => 'string'], 'value' => [], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'path', 'field', 'value']], 'write'),
+            self::t('sp_set_row_field', 'Set row layout or row settings field.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'path' => $pathSchema, 'field' => ['type' => 'string'], 'value' => [], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'path', 'field', 'value']], 'write'),
+            self::t('sp_add_row', 'Add a new row with column layout (e.g. 12, 6.0+6.0, 4.0+4.0+4.0).', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'layout' => ['type' => 'string'], 'after_index' => ['type' => 'integer'], 'settings' => ['type' => 'object'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id']], 'write'),
+            self::t('sp_add_addon', 'Add addon to a column. Uses schema defaults unless template_page_id is set. text_block title pollution from site templates is auto-cleared.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'column_path' => $pathSchema, 'addon_name' => ['type' => 'string'], 'fields' => ['type' => 'object'], 'settings' => ['type' => 'object'], 'template_page_id' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'column_path', 'addon_name']], 'write'),
+            self::t('sp_delete_node', 'Delete row, column, or addon by path.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'path' => $pathSchema, 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'path']], 'destructive'),
+            self::t('sp_clone_row', 'Clone a row (with all columns/addons/styles) to same or new position.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'row_path' => $pathSchema, 'after_index' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'row_path']], 'write'),
+            self::t('sp_validate_page', 'Validate SP page content structure before save.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer']], 'required' => ['page_id']], 'read'),
+            self::t('sp_repair_page_layout', 'Fix column widths and row settings so SP editor renders rows/columns correctly.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id']], 'write'),
+            self::t('sp_create_page_from_template', 'Duplicate an existing SP page as a new page (best starting point for design).', ['type' => 'object', 'properties' => ['template_page_id' => ['type' => 'integer'], 'title' => ['type' => 'string'], 'published' => ['type' => 'integer'], 'language' => ['type' => 'string'], 'dry_run' => ['type' => 'boolean']], 'required' => ['template_page_id', 'title']], 'write'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private static function phase12(): array
+    {
+        $pathSchema = ['type' => 'string', 'description' => 'Node path e.g. rows[0].columns[0].addons[0]'];
+
+        return [
+            self::t('sp_get_addon_blueprint', 'Get full addon node blueprint from schema or template page (settings + type).', ['type' => 'object', 'properties' => ['addon_name' => ['type' => 'string'], 'template_page_id' => ['type' => 'integer']], 'required' => ['addon_name']], 'read'),
+            self::t('sp_set_column_field', 'Set column settings field.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'path' => $pathSchema, 'field' => ['type' => 'string'], 'value' => [], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'path', 'field', 'value']], 'write'),
+            self::t('sp_set_addon_style_tab', 'Set multiple addon fields for content, style, or advanced tab in one call.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'path' => $pathSchema, 'tab' => ['type' => 'string'], 'fields' => ['type' => 'object'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'path', 'tab', 'fields']], 'write'),
+            self::t('sp_add_repeatable_item', 'Add item to repeatable addon field (accordion, tabs, …).', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'addon_path' => $pathSchema, 'repeatable_key' => ['type' => 'string'], 'item' => ['type' => 'object'], 'template_page_id' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'addon_path']], 'write'),
+            self::t('sp_clone_addon', 'Clone an addon within its column.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'addon_path' => $pathSchema, 'after_index' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'addon_path']], 'write'),
+            self::t('sp_move_node', 'Move addon to another column (or reorder within column).', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'from_path' => $pathSchema, 'to_column_path' => $pathSchema, 'to_index' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'from_path', 'to_column_path']], 'write'),
+            self::t('sp_list_section_presets', 'List row section presets from existing SP pages on the site.', ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer']]], 'read'),
+            self::t('sp_insert_section', 'Insert a row copied from another SP page (section library).', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'source_page_id' => ['type' => 'integer'], 'row_index' => ['type' => 'integer'], 'after_index' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'source_page_id', 'row_index']], 'write'),
+            self::t('sp_find_addons_on_page', 'Find addon paths on a page, optionally filtered by addon name.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'addon_name' => ['type' => 'string']], 'required' => ['page_id']], 'read'),
+            self::t('sp_bulk_set_addon_field', 'Set the same field value on multiple addon paths.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'paths' => ['type' => 'array', 'items' => ['type' => 'string']], 'field' => ['type' => 'string'], 'value' => [], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'paths', 'field', 'value']], 'write'),
+            self::t('sp_set_addon_media', 'Set image/media field on an addon (src, alt, width, height).', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'path' => $pathSchema, 'field' => ['type' => 'string'], 'src' => ['type' => 'string'], 'alt' => ['type' => 'string'], 'value' => ['type' => 'object'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id', 'path', 'src']], 'write'),
+            self::t('sp_preview_page', 'Get frontend and admin URLs to preview an SP page.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer']], 'required' => ['page_id']], 'read'),
+            self::t('sp_set_page_css', 'Update custom CSS for an SP page. Pass inline css or media_path (e.g. images/jmcp/style.css) to avoid large JSON payloads.', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'css' => ['type' => 'string'], 'media_path' => ['type' => 'string', 'description' => 'Joomla media path to a .css file (preferred for large stylesheets)'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id']], 'write'),
+            self::t('sp_save_page_design', 'Validate and persist current page design (preferred save after tree edits).', ['type' => 'object', 'properties' => ['page_id' => ['type' => 'integer'], 'dry_run' => ['type' => 'boolean']], 'required' => ['page_id']], 'write'),
         ];
     }
 

@@ -12,6 +12,7 @@ namespace Joomla\Component\Jmcp\Administrator\Service\Executor;
 
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Application\ApplicationHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Table\Menu;
 use Joomla\CMS\Table\MenuType;
@@ -67,16 +68,23 @@ class MenuExecutor
         $table = new Menu(Factory::getDbo());
         $parentId = (int) ($params['parent_id'] ?? 1);
 
+        $title = trim((string) ($params['title'] ?? ''));
+        if ($title === '') {
+            throw new \RuntimeException('title is required.');
+        }
+
         $data = [
-            'title'        => (string) ($params['title'] ?? ''),
+            'title'        => $title,
+            'alias'        => ApplicationHelper::stringURLSafe((string) ($params['alias'] ?? $title)),
             'menutype'     => (string) ($params['menutype'] ?? ''),
             'type'         => (string) ($params['type'] ?? 'component'),
             'link'         => (string) ($params['link'] ?? ''),
-            'published'    => 1,
-            'access'       => 1,
-            'language'     => '*',
+            'published'    => (int) ($params['published'] ?? 1),
+            'access'       => (int) ($params['access'] ?? 1),
+            'language'     => (string) ($params['language'] ?? '*'),
             'client_id'    => 0,
             'component_id' => (int) ($params['component_id'] ?? 0),
+            'parent_id'    => $parentId,
         ];
 
         $table->setLocation($parentId, 'last-child');

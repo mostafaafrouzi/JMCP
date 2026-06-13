@@ -116,7 +116,8 @@ class SpPageExecutor
                 return ['id' => $id, 'dry_run' => true, 'fields' => array_keys($data), 'message' => 'Dry run: SP page update validated.'];
             }
             $data['id'] = $id;
-            $db->updateObject(self::TABLE, (object) $data, 'id');
+            $row = (object) $data;
+            $db->updateObject(self::TABLE, $row, 'id');
             $message = 'SP Page updated successfully.';
         } else {
             if ($dryRun) {
@@ -130,7 +131,11 @@ class SpPageExecutor
             $data['hits'] = 0;
             $data['text'] = (string) ($params['layout'] ?? '[]');
             $data['content'] = (string) ($params['content'] ?? '[]');
-            $db->insertObject(self::TABLE, (object) $data);
+            $data['css'] = (string) ($params['css'] ?? '');
+            $data['og_title'] = (string) ($params['og_title'] ?? '');
+            $data['og_description'] = (string) ($params['og_description'] ?? '');
+            $row = (object) $data;
+            $db->insertObject(self::TABLE, $row);
             $id = (int) $db->insertid();
             $message = 'SP Page created successfully.';
         }
@@ -342,11 +347,13 @@ class SpPageExecutor
 
         if ($id > 0) {
             $data['id'] = $id;
-            $db->updateObject('#__sppagebuilder_collections', (object) $data, 'id');
+            $row = (object) $data;
+            $db->updateObject('#__sppagebuilder_collections', $row, 'id');
         } else {
             $data['created'] = Factory::getDate()->toSql();
             $data['created_by'] = Factory::getApplication()->getIdentity()->id ?: 0;
-            $db->insertObject('#__sppagebuilder_collections', (object) $data);
+            $row = (object) $data;
+            $db->insertObject('#__sppagebuilder_collections', $row);
             $id = (int) $db->insertid();
         }
 

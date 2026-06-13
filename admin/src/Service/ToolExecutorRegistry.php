@@ -30,6 +30,7 @@ use Joomla\Component\Jmcp\Administrator\Service\Executor\PluginExecutor;
 use Joomla\Component\Jmcp\Administrator\Service\Executor\SeoExecutor;
 use Joomla\Component\Jmcp\Administrator\Service\Executor\ShopExecutor;
 use Joomla\Component\Jmcp\Administrator\Service\Executor\SiteExecutor;
+use Joomla\Component\Jmcp\Administrator\Service\Executor\SpDesignerExecutor;
 use Joomla\Component\Jmcp\Administrator\Service\Executor\SpPageExecutor;
 use Joomla\Component\Jmcp\Administrator\Service\Executor\SystemExecutor;
 use Joomla\Component\Jmcp\Administrator\Service\Executor\TagExecutor;
@@ -50,6 +51,7 @@ class ToolExecutorRegistry
         $filesystem  = new FilesystemExecutor();
         $database    = new DatabaseExecutor();
         $spPage      = new SpPageExecutor();
+        $spDesigner  = new SpDesignerExecutor(null, null, null, $spPage);
         $code        = new CodeExecutor();
         $site        = new SiteExecutor();
         $media       = new MediaExecutor();
@@ -137,6 +139,33 @@ class ToolExecutorRegistry
             'delete_sp_collection' => [$spPage, 'deleteSpCollection'],
             'duplicate_sp_page' => [$spPage, 'duplicateSpPage'],
             'publish_sp_page_to_menu' => [$spPage, 'publishSpPageToMenu'],
+            'sp_list_addons' => [$spDesigner, 'listSpAddons'],
+            'sp_get_addon_schema' => [$spDesigner, 'getSpAddonSchema'],
+            'sp_get_page_tree' => [$spDesigner, 'getSpPageTree'],
+            'sp_get_node' => [$spDesigner, 'getSpNode'],
+            'sp_set_addon_field' => [$spDesigner, 'setSpAddonField'],
+            'sp_set_row_field' => [$spDesigner, 'setSpRowField'],
+            'sp_add_row' => [$spDesigner, 'addSpRow'],
+            'sp_add_addon' => [$spDesigner, 'addSpAddon'],
+            'sp_delete_node' => [$spDesigner, 'deleteSpNode'],
+            'sp_clone_row' => [$spDesigner, 'cloneSpRow'],
+            'sp_validate_page' => [$spDesigner, 'validateSpPage'],
+            'sp_repair_page_layout' => [$spDesigner, 'repairSpPageLayout'],
+            'sp_create_page_from_template' => [$spDesigner, 'createSpPageFromTemplate'],
+            'sp_get_addon_blueprint' => [$spDesigner, 'getSpAddonBlueprint'],
+            'sp_set_column_field' => [$spDesigner, 'setSpColumnField'],
+            'sp_set_addon_style_tab' => [$spDesigner, 'setSpAddonStyleTab'],
+            'sp_add_repeatable_item' => [$spDesigner, 'addSpRepeatableItem'],
+            'sp_clone_addon' => [$spDesigner, 'cloneSpAddon'],
+            'sp_move_node' => [$spDesigner, 'moveSpNode'],
+            'sp_list_section_presets' => [$spDesigner, 'listSpSectionPresets'],
+            'sp_insert_section' => [$spDesigner, 'insertSpSection'],
+            'sp_find_addons_on_page' => [$spDesigner, 'findSpAddonsOnPage'],
+            'sp_bulk_set_addon_field' => [$spDesigner, 'bulkSetSpAddonField'],
+            'sp_set_addon_media' => [$spDesigner, 'setSpAddonMedia'],
+            'sp_preview_page' => [$spDesigner, 'previewSpPage'],
+            'sp_set_page_css' => [$spDesigner, 'setSpPageCss'],
+            'sp_save_page_design' => [$spDesigner, 'saveSpPageDesign'],
             'execute_php' => [$code, 'executePhp'],
             'run_cli_command' => [$code, 'runCliCommand'],
             'list_media' => [$media, 'listMedia'],

@@ -59,6 +59,14 @@ class SkillRegistry
                 ],
             ],
             [
+                'name'        => 'design-sp-page',
+                'description' => 'Design or edit SP Page Builder pages like the visual editor (rows, addons, fields, styles).',
+                'arguments'   => [
+                    ['name' => 'page_id', 'description' => 'SP page ID (or 0 to create from template)', 'required' => false],
+                    ['name' => 'goal', 'description' => 'What to build or change', 'required' => true],
+                ],
+            ],
+            [
                 'name'        => 'rebrand-site',
                 'description' => 'Rebrand entire Joomla site: config, articles, SP pages, menus, VirtueMart, modules.',
                 'arguments'   => [
@@ -73,7 +81,8 @@ class SkillRegistry
     {
         $templates = [
             'optimize-article-seo' => "You are a Joomla SEO expert. Use analyze_page_seo and get_article on article ID {article_id}. Update meta description, title length, H1, internal links. Use update_article_seo_meta. Report changes in Persian if site is fa-IR.",
-            'build-landing-page'   => "Create a landing page titled '{title}' with goal '{goal}'. Check list_extensions for SP Page Builder. If installed use save_sp_page; otherwise create_article + create_menu_item. Add mod_custom for CTA if needed.",
+            'build-landing-page'   => "Create a landing page titled '{title}' with goal '{goal}'. Use save_sp_page (empty content) or sp_create_page_from_template, then sp_add_row + sp_add_addon (native addons only: heading, text_block, button, image — never raw_html). sp_validate_page then sp_save_page_design. Optional: upload_media + sp_set_page_css with media_path. Publish with create_menu_item.",
+            'design-sp-page'       => "SP Page Builder designer workflow for: {goal}. Page ID: {page_id}. Native structure only (Row → Column → Addon). Steps: 1) sp_list_addons. 2) sp_get_addon_blueprint (no template_page_id unless cloning styles). 3) New page: save_sp_page title + content=[] OR sp_create_page_from_template. 4) Build: sp_add_row (layout e.g. 12 or 6.0+6.0), sp_add_addon, sp_set_addon_field, sp_set_addon_style_tab, sp_set_column_field, sp_set_row_field. 5) sp_validate_page then sp_save_page_design (syncs content+text). 6) Styling: upload_media then sp_set_page_css with media_path (not inline css for large files). 7) sp_preview_page. Repair legacy pages: sp_repair_page_layout. Paths: rows[0].columns[0].addons[0]. Use dry_run=true on writes.",
             'setup-multilingual'   => "Set up multilingual site for languages: {languages}. Use list_content_languages, create_content_language, set_article_associations, set_menu_item_associations.",
             'audit-site-health'    => "Run get_site_health_extended, get_sitemap_status, audit_duplicate_content, check_broken_links, check_core_updates. Produce prioritized action list.",
             'create-template-override' => "Use create_template_override for {component} view {view}. Read existing layout with read_file. Write minimal override.",

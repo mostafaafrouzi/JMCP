@@ -9,6 +9,7 @@
 | **4** | 1.0.0 | Resources, prompts, pending queue, webhooks | ✅ Done |
 | **5** | 1.0.0 | Maintenance, rebrand, bulk replace | ✅ Done |
 | **6** | 1.0.0 | VM/SP deep tools, site ops | ✅ Done |
+| **6b** | 1.2.0 | SP Page Builder **designer** (native rows/addons) | ✅ Done |
 | **7** | 1.0.0 | VM commerce, SP meta, collections | ✅ Done |
 | **8** | 1.0.0 | Helix/UT, template positions | ✅ Done |
 | **9** | 1.0.0 | Users, banners, scheduler, schema.org | ✅ Done |
@@ -30,6 +31,7 @@
 
 ### SP Page Builder
 - Pages, meta, modules, collections, bulk content replace
+- **v1.2.0 designer:** native row/column/addon editing — `sp_add_row`, `sp_add_addon`, `sp_save_page_design`, `sp_repair_page_layout`, `sp_set_page_css`
 
 ### Helix / templates
 - Params, menu layout, template style merge (non-destructive)
@@ -46,7 +48,7 @@
 
 ---
 
-## Known limitations (v1.0.0)
+## Known limitations (v1.2.0)
 
 | Item | Workaround |
 |------|------------|
@@ -55,6 +57,8 @@
 | Cache / finder CLI | Enable `allow_cli_exec` |
 | Raw SQL | Enable `allow_sql_exec` (not recommended) |
 | Pro tools | `virtuemart_list_orders`, webhooks, memory, some backups |
+| Large SP page CSS via MCP | Use `sp_set_page_css` with `media_path` after `upload_media`, or inline `css` for smaller sheets |
+| Legacy MCP pages missing column width | Run `sp_repair_page_layout` once, then `sp_save_page_design` |
 
 ---
 
